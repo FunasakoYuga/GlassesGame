@@ -514,7 +514,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
   moveSpeed: 5
   gravity: -9.81
-  cameraTransform: {fileID: 0}
+  cameraTransform: {fileID: 330585546}
   lookSpeed: 120
   minPitch: -90
   maxPitch: 90

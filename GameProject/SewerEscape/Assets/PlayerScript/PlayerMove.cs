@@ -5,8 +5,9 @@ using UnityEngine.InputSystem;
 public class PlayerMove : MonoBehaviour
 {
     [Header("移動設定")]
-    [SerializeField] private float moveSpeed = 5.0f;
-    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float moveSpeed = 5.0f;    // 移動スピード
+    [SerializeField] private float dashSpeed = 8.0f;   // ダッシュスピード
+    [SerializeField] private float gravity = -9.81f;    // 重力
 
     [Header("視点操作設定")]
     [SerializeField] private Transform cameraTransform; // Main Cameraをここにアタッチ
@@ -19,6 +20,7 @@ public class PlayerMove : MonoBehaviour
     private Vector2 lookInput;
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
+    private bool isDashPressed = false;
 
     void Awake()
     {
@@ -33,14 +35,15 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-        // --------------------------------------------------
+       
         // 1. 入力取得（ゲームパッド 優先）
-        // --------------------------------------------------
         Gamepad gamepad = Gamepad.current;
         if (gamepad != null)
         {
             moveInput = gamepad.leftStick.ReadValue();
             lookInput = gamepad.rightStick.ReadValue();
+
+            isDashPressed = gamepad.leftShoulder.isPressed; // LBボタンを押している間はダッシュ
         }
         else
         {
@@ -52,6 +55,8 @@ public class PlayerMove : MonoBehaviour
                 if (Keyboard.current.sKey.isPressed) moveInput.y -= 1f;
                 if (Keyboard.current.aKey.isPressed) moveInput.x -= 1f;
                 if (Keyboard.current.dKey.isPressed) moveInput.x += 1f;
+
+                isDashPressed = Keyboard.current.spaceKey.isPressed; // スペースキーを押している間はダッシュ
             }
 
             // マウス視点フォールバック
@@ -62,9 +67,7 @@ public class PlayerMove : MonoBehaviour
             }
         }
 
-        // --------------------------------------------------
         // 2. 右スティックによる視点回転
-        // --------------------------------------------------
         float yaw = lookInput.x * lookSpeed * Time.deltaTime;
         float pitch = lookInput.y * lookSpeed * Time.deltaTime;
 
@@ -82,16 +85,15 @@ public class PlayerMove : MonoBehaviour
             cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
         }
 
-        // --------------------------------------------------
         // 3. 左スティックによる移動（見ている向き基準）
-        // --------------------------------------------------
         Vector3 move = (transform.right * moveInput.x + transform.forward * moveInput.y);
         if (move.magnitude > 1.0f)
         {
             move.Normalize();
         }
 
-        Vector3 finalVelocity = move * moveSpeed;
+        float currentSpeed = isDashPressed ? dashSpeed : moveSpeed;
+        Vector3 finalVelocity = move * currentSpeed;
 
         // 接地判定と重力
         if (controller.isGrounded && verticalVelocity.y < 0)

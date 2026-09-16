@@ -1,0 +1,35 @@
+{
+    "version": 1,
+    "name": "PlayerInputAction",
+    "maps": [
+        {
+            "name": "QuickTurn",
+            "id": "a17ccc73-d72b-4939-962e-5e49c40de063",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "466432eb-b4ed-4409-824c-196b6bbe1867",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "80b98d19-fcc7-471d-ab44-14866a642e15",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

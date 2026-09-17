@@ -295,6 +295,7 @@ MonoBehaviour:
   dashSpeed: 10
   gravity: -9.81
   cameraTransform: {fileID: 5010760242661638788}
-  lookSpeed: 120
+  GamePadlookSpeed: 2
+  MouselookSpeed: 1
   minPitch: -90
   maxPitch: 60

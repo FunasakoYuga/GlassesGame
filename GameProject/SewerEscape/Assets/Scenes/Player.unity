@@ -971,7 +971,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9221214317610644493, guid: 3f25e02e8ba827d4eb9a6c30af968325, type: 3}
       propertyPath: lookSpeed
-      value: 300
+      value: 250
+      objectReference: {fileID: 0}
+    - target: {fileID: 9221214317610644493, guid: 3f25e02e8ba827d4eb9a6c30af968325, type: 3}
+      propertyPath: GamepadquickTurnSpeed
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 9221214317610644493, guid: 3f25e02e8ba827d4eb9a6c30af968325, type: 3}
+      propertyPath: KeyboardquickTurnSpeed
+      value: 1000
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

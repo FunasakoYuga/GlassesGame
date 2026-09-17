@@ -1,32 +1,30 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using System.Collections; // コルーチンを使うために必要
+
+
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMove : MonoBehaviour
 {
     [Header("移動設定")]
-    [SerializeField] private float moveSpeed = 5.0f;
-    [SerializeField] private float dashSpeed = 8.0f;
+    [SerializeField] private float moveSpeed = 5.0f;    // 移動速度
+    [SerializeField] private float dashSpeed = 8.0f;    // ダッシュ速度
     [SerializeField] private float gravity = -9.81f;
 
     [Header("視点操作設定")]
     [SerializeField] private Transform cameraTransform;
-    [SerializeField] private float lookSpeed = 120.0f;
+    [SerializeField] private float GamePadlookSpeed = 120.0f;
+    [SerializeField] private float MouselookSpeed = 150.0f;
     [SerializeField] private float minPitch = -90.0f;
     [SerializeField] private float maxPitch = 90.0f;
-
-    [Header("クイックターン設定")]
-    [SerializeField] private float quickTurnSpeed = 720f; // 回転の速さ（1秒あたりの度数）
 
     private CharacterController controller;
     private Vector2 moveInput;
     private Vector2 lookInput;
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
-    private bool isDashPressed = false;
-    private bool isQuickTurning = false; // 回転中フラグ
-
+    private bool isDashPressed = false; // ダッシュ中かどうか
+    private bool isLookingBack = false; // 後ろを向いているか
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -39,9 +37,6 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-        // クイックターン中は通常の視点操作や移動入力を一時的に無効化したい場合はここで弾くこともできます
-        // （今回は入力受付中にターンが始まると上書きされる形になります）
-
         // 1. 入力取得（ゲームパッド 優先）
         Gamepad gamepad = Gamepad.current;
         if (gamepad != null)
@@ -49,17 +44,13 @@ public class PlayerMove : MonoBehaviour
             moveInput = gamepad.leftStick.ReadValue();
             lookInput = gamepad.rightStick.ReadValue();
 
-            isDashPressed = gamepad.leftShoulder.isPressed;
+            isDashPressed = gamepad.leftShoulder.isPressed; // LBボタンでダッシュ
 
-            // 右スティック押し込みで滑らかなクイックターン
-            if (gamepad.rightStickButton.wasPressedThisFrame && !isQuickTurning)
-            {
-                StartCoroutine(PerformQuickTurn());
-            }
+            isLookingBack = gamepad.rightStickButton.isPressed; // 右スティックを押している間後ろを見る
         }
         else
         {
-            // キーボード（WASD）フォールバック
+            // キーボード操作
             moveInput = Vector2.zero;
             if (Keyboard.current != null)
             {
@@ -71,34 +62,36 @@ public class PlayerMove : MonoBehaviour
                 isDashPressed = Keyboard.current.spaceKey.isPressed;
             }
 
-            // マウス視点フォールバック
+            // マウス視点操作
             lookInput = Vector2.zero;
             if (Mouse.current != null)
             {
                 lookInput = Mouse.current.delta.ReadValue() * 0.1f;
 
-                // マウス右クリックで滑らかなクイックターン
-                if (Mouse.current.rightButton.wasPressedThisFrame && !isQuickTurning)
-                {
-                    StartCoroutine(PerformQuickTurn());
-                }
+                isLookingBack = Mouse.current.rightButton.isPressed;    // 右クリックで後ろを見る
             }
         }
 
         // 2. 通常の視点回転（クイックターン中でない時だけ反映させることも可能ですが、今回はそのまま）
-        float yaw = lookInput.x * lookSpeed * Time.deltaTime;
-        float pitch = lookInput.y * lookSpeed * Time.deltaTime;
+        float yaw = lookInput.x * GamePadlookSpeed * Time.deltaTime;
+        float yaws = lookInput.x * MouselookSpeed;
+        float pitch = lookInput.y * GamePadlookSpeed * Time.deltaTime;
+        float pitchs = lookInput.y * MouselookSpeed;
 
         if (Mathf.Abs(yaw) > 0.001f)
         {
             transform.Rotate(Vector3.up * yaw);
+            transform.Rotate(Vector3.up * yaws);
         }
 
         if (cameraTransform != null)
         {
             cameraPitch -= pitch;
             cameraPitch = Mathf.Clamp(cameraPitch, minPitch, maxPitch);
-            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+
+           // 後ろを見るときは視点を180度後ろに動かす
+            float yawOffset = isLookingBack ? 180f : 0f;
+            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, yawOffset, 0f);
         }
 
         // 3. 移動処理
@@ -123,30 +116,5 @@ public class PlayerMove : MonoBehaviour
         finalVelocity.y = verticalVelocity.y;
 
         controller.Move(finalVelocity * Time.deltaTime);
-    }
-
-    // 滑らかに180度回転させるコルーチン
-    private IEnumerator PerformQuickTurn()
-    {
-        isQuickTurning = true;
-
-        float targetAngle = 180f;
-        float rotatedAngle = 0f;
-
-        while (rotatedAngle < targetAngle)
-        {
-            float step = quickTurnSpeed * Time.deltaTime;
-            if (rotatedAngle + step > targetAngle)
-            {
-                step = targetAngle - rotatedAngle;
-            }
-
-            transform.Rotate(0f, step, 0f);
-            rotatedAngle += step;
-
-            yield return null; // 1フレーム待つ
-        }
-
-        isQuickTurning = false;
     }
 }

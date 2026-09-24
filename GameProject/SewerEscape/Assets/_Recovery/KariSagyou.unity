@@ -1489,19 +1489,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChase
   currentState: 0
   playerTag: Player
-  wanderRadius: 8
+  wanderRadius: 6
   minWaitTime: 1
   maxWaitTime: 4
-  detectionRange: 8.05
+  detectionRange: 7.96
   loseTargetRange: 10.56
-  eyeHeight: 1.5
+  eyeHeight: 1.27
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 0
   fieldOfViewAngle: 120
-  searchWaitTime: 5
+  searchWaitTime: 5.09
   attackTriggerName: Attack
-  attackCooldown: 1.5
+  attackCooldown: 1.01
 --- !u!195 &1431506766
 NavMeshAgent:
   m_ObjectHideFlags: 0

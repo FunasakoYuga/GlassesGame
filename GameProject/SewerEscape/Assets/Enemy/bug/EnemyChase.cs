@@ -26,6 +26,7 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private float maxWaitTime = 4f;          // 到着後の最大立ち止まり時間（秒）
 
     [Header("索敵設定")]
+    [SerializeField] private float closeDetectionRange = 3f; // 至近距離（背後でも無条件で気づく距離）
     [SerializeField] private float detectionRange = 10f; // 発見距離
     [SerializeField] private float loseTargetRange = 15f; // 見失う距離
     [SerializeField] private float eyeHeight = 1.5f; // 目の高さ
@@ -208,13 +209,23 @@ public class EnemyChase : MonoBehaviour
     {
         if (playerTransform == null) return false;
 
+        // 至近距離（背後含む）にいる場合は無条件で発見
+        if (distance <= closeDetectionRange)
+        {
+            return true;
+        }
+
+        // --- 以下は至近距離より遠い場合（通常の視界判定） ---
+
         Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
         Vector3 targetEyePosition = playerTransform.position + Vector3.up * eyeHeight;
         Vector3 directionToPlayer = (targetEyePosition - eyePosition).normalized;
 
+        // 視野角チェック（正面からの角度）
         float angle = Vector3.Angle(transform.forward, directionToPlayer);
         if (angle > fieldOfViewAngle * 0.5f) return false;
 
+        // 障害物（壁）チェック
         if (Physics.Raycast(eyePosition, directionToPlayer, distance, obstacleLayer))
         {
             return false;
@@ -257,6 +268,11 @@ public class EnemyChase : MonoBehaviour
     // --- Gizmos描画 ---
     private void OnDrawGizmosSelected()
     {
+        // 至近距離の可視化（マゼンタ色）
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireSphere(transform.position, closeDetectionRange);
+
+        // 発見・見失う距離の可視化
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
         Gizmos.color = Color.red;

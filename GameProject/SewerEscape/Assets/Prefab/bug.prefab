@@ -192,6 +192,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: bug
       objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 9402238d7da884d438de7cc5b71e735d, type: 3}
+      propertyPath: m_TagString
+      value: Enemy
+      objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 9402238d7da884d438de7cc5b71e735d, type: 3}
       propertyPath: m_LocalScale.x
       value: 2.69584

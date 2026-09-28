@@ -21,8 +21,6 @@ public class PlayerHealth : MonoBehaviour
     {
         if (isDead) return;
 
-        Debug.Log("当たった相手のオブジェクト名: " + target.name);
-
         // 相手自身、または親オブジェクトのタグが "Enemy" か判定
         if (target.CompareTag("Enemy") || target.transform.root.CompareTag("Enemy"))
         {

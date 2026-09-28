@@ -7,7 +7,8 @@ public class PlayerMove : MonoBehaviour
     [Header("移動設定")]
     [SerializeField] private float moveSpeed = 5.0f;
     [SerializeField] private float dashSpeed = 8.0f;
-    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float gravity = -7f;
 
     [Header("視点操作設定")]
     [SerializeField] private Transform cameraTransform;
@@ -40,6 +41,7 @@ public class PlayerMove : MonoBehaviour
         float pitch = 0f;
         bool isDashPressed = false;
         bool isLookingBack = false;
+        bool isJump = false;
 
         // 1. 移動入力の取得
 
@@ -54,6 +56,7 @@ public class PlayerMove : MonoBehaviour
             }
             if (gamepad.leftShoulder.isPressed) isDashPressed = true;
             if (gamepad.rightStickButton.isPressed) isLookingBack = true;
+            if (gamepad.buttonSouth.wasPressedThisFrame) isJump = true;
         }
 
         // キーボード（キーが押されていたら上書き）
@@ -98,6 +101,7 @@ public class PlayerMove : MonoBehaviour
                 pitch = mouseDelta.y * MouselookSpeed * 0.1f;
             }
             if (Mouse.current.rightButton.isPressed) isLookingBack = true;
+            if (Mouse.current.leftButton.isPressed) isJump = true;
         }
 
         // 3. 視点回転の適用
@@ -129,8 +133,24 @@ public class PlayerMove : MonoBehaviour
         {
             verticalVelocity.y = -2.0f;
         }
+        if (controller.isGrounded)
+        {
+            // 地面に張り付かせるための下向き微小速度
+            if (verticalVelocity.y < 0)
+            {
+                verticalVelocity.y = -2.0f;
+            }
+
+            // 接地時のみジャンプ初速を計算
+            if (isJump)
+            {
+                // 目標の高さ(jumpHeight)に届く初速度: v = sqrt(2 * g * h)
+                verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2.0f * gravity);
+            }
+        }
         else
         {
+            // 空中にいる間は重力を加算
             verticalVelocity.y += gravity * Time.deltaTime;
         }
 

@@ -1936,6 +1936,10 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: playerMove
+      value: 
+      objectReference: {fileID: 1103455894}
+    - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: fadeDuration
       value: 2
       objectReference: {fileID: 0}
@@ -1944,20 +1948,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1651405571}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: playerMoveScript
-      value: 
-      objectReference: {fileID: 1103455894}
-    - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: blackScreenWaitTime
       value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4604229289928089868, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 5573578084436491291, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: m_IsTrigger
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

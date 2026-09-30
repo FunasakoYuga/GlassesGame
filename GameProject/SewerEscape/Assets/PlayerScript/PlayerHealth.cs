@@ -4,13 +4,13 @@ using UnityEngine;
 public class PlayerHealth : MonoBehaviour
 {
     [Header("耐久設定")]
-    [SerializeField] private int maxHits = 3;                       // 3回目でDestroy
+    [SerializeField] private int maxHits = 3;                       // 3回目で完全フェードアウト
 
     [Header("フェード演出設定")]
-    [SerializeField] private CanvasGroup fadeCanvasGroup;           // 画面を覆うパネルのCanvasGroup
+    [SerializeField] private CanvasGroup fadeCanvasGroup;           // 画面を覆うパネル
     [Range(1.0f, 4.0f)]
-    [SerializeField] private float fadeDuration = 1.5f;             // 暗くなる / 明るくなる時間（秒）
-    [SerializeField] private float blackScreenWaitTime = 0.3f;      // 暗転中の停止時間（秒）
+    [SerializeField] private float fadeDuration = 1.5f;             // フェードイン / フェードアウト
+    [SerializeField] private float blackScreenWaitTime = 0.3f;      // フェードの停止時間（秒）
 
     [Header("操作・視点設定")]
     [Tooltip("移動・視点操作を行っているPlayerMoveスクリプト")]
@@ -71,7 +71,7 @@ public class PlayerHealth : MonoBehaviour
         // 敵と接触したら敵のほうにカメラを向ける
         if (playerMove != null)
         {
-            // 敵の足元ではなく胴体あたりを見るように少し高さを加算（+1.0m）
+            // 敵の胴体あたりを見るように少し高さを加算（+1.0m）
             Vector3 enemyCenter = target.transform.position + Vector3.up * 1.0f;
             playerMove.LookAtPosition(enemyCenter);
         }
@@ -89,7 +89,7 @@ public class PlayerHealth : MonoBehaviour
 
     private IEnumerator RespawnRoutine()
     {
-        // 1. 操作を停止（カメラが敵を向いた状態でロックされる）
+        // 操作と視点ロック
         SetPlayerInput(false);
 
         // 2. 徐々に暗転
@@ -99,10 +99,10 @@ public class PlayerHealth : MonoBehaviour
             yield return StartCoroutine(Fade(0f, 1f, fadeDuration));
         }
 
-        // 3. 暗転中の待機
+        // フェード待機
         yield return new WaitForSeconds(blackScreenWaitTime);
 
-        // 4. 初期位置へテレポート
+        // リスポーン地点に復活
         if (characterController != null)
         {
             characterController.enabled = false;
@@ -111,7 +111,7 @@ public class PlayerHealth : MonoBehaviour
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
 
-        // 視点と落下速度の初期化
+        // 視点と操作の初期化
         if (playerMove != null)
         {
             playerMove.ResetLook();
@@ -122,7 +122,7 @@ public class PlayerHealth : MonoBehaviour
             characterController.enabled = true;
         }
 
-        // 5. 徐々に明転
+        // 5. 徐々にフェードアウト
         if (fadeCanvasGroup != null)
         {
             yield return StartCoroutine(Fade(1f, 0f, fadeDuration));
@@ -171,12 +171,37 @@ public class PlayerHealth : MonoBehaviour
     {
         isDead = true;
         SetPlayerInput(false);
-        Debug.Log("3回被弾したためDestroyします");
+        Debug.Log("3回被弾したためゲームオーバー");
+        // 1. フェードアウト
         if (fadeCanvasGroup != null)
         {
             fadeCanvasGroup.blocksRaycasts = true;
             yield return StartCoroutine(Fade(0f, 1f, fadeDuration));
+
+            // 確実に真っ黒（Alpha = 1）で固定(リザルト)
+            fadeCanvasGroup.alpha = 1f;
         }
-        Destroy(gameObject);
+
+        // 2. プレイヤーの移動判定・当たり判定を停止
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.enabled = false;
+        }
+
+        // 3. プレイヤーの見た目（3Dモデル）のみを非表示にする
+        // （カメラやCanvasを消さないよう、RendererのみをOFFにする）
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer r in renderers)
+        {
+            r.enabled = false;
+        }
+
+        Debug.Log("ゲームオーバー：画面を暗転させたまま停止しました");
     }
 }

@@ -13,9 +13,9 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private float blackScreenWaitTime = 0.3f;      // 暗転中の停止時間（秒）
 
     [Header("操作・視点設定")]
-    [Tooltip("移動・視点操作を行っているスクリプト（PlayerMove）をアタッチ")]
+    [Tooltip("移動・視点操作スクリプト")]
     [SerializeField] private MonoBehaviour playerMoveScript;
-    [Tooltip("上下を向いているカメラ（Main Cameraなど）をアタッチ")]
+    [Tooltip("カメラスクリプト")]
     [SerializeField] private Transform playerCamera;
 
     private int currentHits = 0;

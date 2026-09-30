@@ -1,9 +1,13 @@
 using UnityEngine;
 
+/// <summary>
+/// 鍵のかけらの個数を監視する
+/// クリアチェックをする
+/// </summary>
 public class KeyFgmManager : MonoBehaviour
 {
 
-    int keyFgmNum;
+    int keyFgmCount;
     bool isGameClear;
     //[SerializeField] GameObject keyFgm;
     //KeyFragment keyFgmObj;
@@ -12,30 +16,32 @@ public class KeyFgmManager : MonoBehaviour
     void Start()
     {
         isGameClear = false;
-        keyFgmNum = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
+        keyFgmCount = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (keyFgmNum <= 0)
+        if (keyFgmCount <= 0)
         {
             isGameClear = true;
         }
-        keyFgmNum = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
+        keyFgmCount = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
 
-        Debug.Log("keyFgmNum" + keyFgmNum);
+        Debug.Log("keyFgmNum" + keyFgmCount);
         Debug.Log("isGameEnd" + isGameClear);
     }
 
     /// <summary>
     /// 鍵のかけらのオブジェクトがなくなったときのクリアフラグ
+    /// テキスト表示に使って欲しい
     /// </summary>
     /// <returns>true:クリア false: ゲーム中</returns>
     public bool IsGameClear(){ return isGameClear;}
     /// <summary>
     /// 鍵のかけらの残り個数を取得
+    /// テキスト表示に使って欲しい
     /// </summary>
     /// <returns></returns>
-    public int GetKeyFgmNum() {  return keyFgmNum; }
+    public int GetKeyFgmNum() {  return keyFgmCount; }
 }

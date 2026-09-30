@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
@@ -78,7 +78,7 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHits >= maxHits)
         {
-            StartCoroutine(Die());
+            Die();
         }
         else
         {
@@ -167,7 +167,7 @@ public class PlayerHealth : MonoBehaviour
         fadeCanvasGroup.alpha = targetAlpha;
     }
 
-    private IEnumerator Die()
+    private void Die()
     {
         isDead = true;
         SetPlayerInput(false);

@@ -158,4 +158,15 @@ public class PlayerMove : MonoBehaviour
 
         controller.Move(finalVelocity * Time.deltaTime);
     }
+    public void ResetLook()
+    {
+        // リスポーン時視点リセット
+        cameraPitch = 0f;
+        verticalVelocity = Vector3.zero;
+
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = Quaternion.identity;
+        }
+    }
 }

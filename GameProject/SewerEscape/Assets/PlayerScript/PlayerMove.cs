@@ -103,7 +103,7 @@ public class PlayerMove : MonoBehaviour
                 pitch = mouseDelta.y * MouselookSpeed * 0.1f;
             }
             if (Mouse.current.rightButton.isPressed) isLookingBack = true;
-           
+
         }
 
         // 3. 視点回転の適用

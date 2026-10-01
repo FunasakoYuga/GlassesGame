@@ -63,6 +63,7 @@ public class PlayerMove : MonoBehaviour
         if (Keyboard.current != null)
         {
             Vector2 keyMove = Vector2.zero;
+            // キーボード操作(WASD)
             if (Keyboard.current.wKey.isPressed) keyMove.y += 1f;
             if (Keyboard.current.sKey.isPressed) keyMove.y -= 1f;
             if (Keyboard.current.aKey.isPressed) keyMove.x -= 1f;
@@ -72,7 +73,8 @@ public class PlayerMove : MonoBehaviour
             {
                 moveInput = keyMove;
             }
-            if (Keyboard.current.spaceKey.isPressed) isDashPressed = true;
+            if (Keyboard.current.shiftKey.isPressed) isDashPressed = true; // Shiftキーでダッシュ
+            if (Keyboard.current.spaceKey.isPressed) isJump = true;        // SpaceKeyでダッシュ
         }
 
         // 2. 視点入力の取得（デバイスごとの競合を防止）
@@ -101,7 +103,7 @@ public class PlayerMove : MonoBehaviour
                 pitch = mouseDelta.y * MouselookSpeed * 0.1f;
             }
             if (Mouse.current.rightButton.isPressed) isLookingBack = true;
-            if (Mouse.current.leftButton.isPressed) isJump = true;
+
         }
 
         // 3. 視点回転の適用
@@ -157,5 +159,44 @@ public class PlayerMove : MonoBehaviour
         finalVelocity.y = verticalVelocity.y;
 
         controller.Move(finalVelocity * Time.deltaTime);
+    }
+    public void ResetLook()
+    {
+        // リスポーン時視点リセット
+        cameraPitch = 0f;
+        verticalVelocity = Vector3.zero;
+
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = Quaternion.identity;
+        }
+    }
+
+    // 敵のいる座標へ瞬時に視点を向ける
+    public void LookAtPosition(Vector3 targetPosition)
+    {
+        // 1. 水平方向（プレイヤー本体の向き）を敵に向ける
+        Vector3 lookDirection = targetPosition - transform.position;
+        lookDirection.y = 0f; // 水平方向のみ計算
+
+        // 完全に重なっていない場合のみ回転（ゼロベクトル警告を防止）
+        if (lookDirection.sqrMagnitude > 0.001f)
+        {
+            transform.rotation = Quaternion.LookRotation(lookDirection);
+        }
+
+        // 2. 垂直方向（カメラの上下角度）を敵の高さに向ける
+        if (cameraTransform != null)
+        {
+            Vector3 camToTarget = targetPosition - cameraTransform.position;
+            float flatDistance = new Vector2(camToTarget.x, camToTarget.z).magnitude;
+
+            // 水平からの仰角・俯角を計算（Unityのピッチ符号に合わせて反転）
+            float targetPitch = -Mathf.Atan2(camToTarget.y, flatDistance) * Mathf.Rad2Deg;
+            cameraPitch = Mathf.Clamp(targetPitch, minPitch, maxPitch);
+
+            // カメラの角度を反映
+            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+        }
     }
 }

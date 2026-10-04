@@ -14,8 +14,8 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private float GamePadlookSpeed = 150.0f; // パッドでの視点感度
     [SerializeField] private float MouselookSpeed = 1.0f; // マウスでの視点感度
-    [SerializeField] private float minPitch = -90.0f;
-    [SerializeField] private float maxPitch = 90.0f;
+    [SerializeField] private float UpMaxPitch = -90.0f;
+    [SerializeField] private float DownMaxPitch = 90.0f;
 
     private CharacterController controller;
     private Vector3 verticalVelocity;
@@ -28,6 +28,8 @@ public class PlayerMove : MonoBehaviour
     private const string STATE_IDLE = "Idle";
     private const string STATE_WALK = "Walk";
     private const string STATE_RUN = "Run";
+    private const string STATE_WALKBACK = "WalkBack";
+    private const string STATE_RUNBACK = "RunBack";
     private const string STATE_JUMP = "Jump";
 
     void Awake()
@@ -116,7 +118,7 @@ public class PlayerMove : MonoBehaviour
         if (cameraTransform != null)
         {
             cameraPitch -= pitch;
-            cameraPitch = Mathf.Clamp(cameraPitch, minPitch, maxPitch);
+            cameraPitch = Mathf.Clamp(cameraPitch, UpMaxPitch, DownMaxPitch);
             float yawOffset = isLookingBack ? 180f : 0f;
             cameraTransform.localRotation = Quaternion.Euler(cameraPitch, yawOffset, 0f);
         }
@@ -173,7 +175,15 @@ public class PlayerMove : MonoBehaviour
             // 入力状態に応じてアニメーションの変化
             if (moveInput.sqrMagnitude > 0.01f)
             {
-                targetState = isDash ? STATE_RUN : STATE_WALK;
+                // 後ろ入力（Sキーまたはスティック手前倒し）の判定
+                if (moveInput.y < -0.1f)
+                {
+                    targetState = isDash ? STATE_RUNBACK : STATE_WALKBACK;
+                }
+                else
+                {
+                    targetState = isDash ? STATE_RUN : STATE_WALK;
+                }
             }
             else
             {
@@ -212,7 +222,7 @@ public class PlayerMove : MonoBehaviour
             Vector3 camToTarget = targetPosition - cameraTransform.position;
             float flatDistance = new Vector2(camToTarget.x, camToTarget.z).magnitude;
             float targetPitch = -Mathf.Atan2(camToTarget.y, flatDistance) * Mathf.Rad2Deg;
-            cameraPitch = Mathf.Clamp(targetPitch, minPitch, maxPitch);
+            cameraPitch = Mathf.Clamp(targetPitch, UpMaxPitch, DownMaxPitch);
             cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
         }
     }

@@ -82,7 +82,10 @@ public class PlayerMove : MonoBehaviour
                 moveInput = keyMove;
             }
             if (Keyboard.current.shiftKey.isPressed) isDashPressed = true;
-            if (Keyboard.current.spaceKey.wasPressedThisFrame) isJump = true;
+            if (Keyboard.current.spaceKey.wasPressedThisFrame)
+            {
+                isJump = true;
+            }
         }
 
         // 視点入力
@@ -131,8 +134,10 @@ public class PlayerMove : MonoBehaviour
         }
 
         float currentSpeed = isDashPressed ? dashSpeed : moveSpeed;
+
         Vector3 finalVelocity = move * currentSpeed;
 
+        // 接地しているときは即座にジャンプ可能
         if (controller.isGrounded)
         {
             if (verticalVelocity.y < 0)
@@ -141,12 +146,12 @@ public class PlayerMove : MonoBehaviour
             }
             if (isJump)
             {
-                verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2.0f * gravity);
+                verticalVelocity.y = Mathf.Sqrt(jumpHeight * 2.0f * Mathf.Abs(gravity));
             }
         }
         else
         {
-            verticalVelocity.y += gravity * Time.deltaTime;
+            verticalVelocity.y -= Mathf.Abs(gravity) * Time.deltaTime;
         }
 
         finalVelocity.y = verticalVelocity.y;

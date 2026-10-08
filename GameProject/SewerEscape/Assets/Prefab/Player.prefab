@@ -291,10 +291,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bc5580d3e8c0be4db59ead71b1275be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
-  moveSpeed: 6
+  moveSpeed: 5
   dashSpeed: 10
   jumpHeight: 1.5
-  gravity: -10
+  gravity: -18
   cameraTransform: {fileID: 6731071709962745490}
   GamePadlookSpeed: 150
   MouselookSpeed: 1
@@ -314,8 +314,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHits: 3
   fadeCanvasGroup: {fileID: 0}
+  lookWaitTime: 2
   fadeDuration: 1.5
+  fadeInDuration: 3
   blackScreenWaitTime: 0.3
+  gameOverPanel: {fileID: 0}
   playerMove: {fileID: 4184654544379862942}
 --- !u!54 &674128938700946090
 Rigidbody:

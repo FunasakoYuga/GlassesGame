@@ -1,9 +1,8 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class TitleUIManager : MonoBehaviour
+public class ManualSceneManager : MonoBehaviour
 {
     [Header("フェード用のCanvasGroup（黒いパネル）")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;
@@ -16,9 +15,6 @@ public class TitleUIManager : MonoBehaviour
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
         // 開始時はフェード画面を透明にしてクリックを通すように設定
         if (fadeCanvasGroup != null)
         {
@@ -27,49 +23,29 @@ public class TitleUIManager : MonoBehaviour
         }
     }
 
-    public void OnStartButtonClicked()
+    void Update()
     {
-        // 既に遷移中の場合は何もしない
+
+    }
+
+    /// <summary>
+    /// タイトル画面へ戻るメソッド（UIボタンのOnClickやイベントから呼び出し）
+    /// </summary>
+    public void BackToTitle()
+    {
+        // 既に遷移中の場合は何もしない（連打防止）
         if (isTransitioning) return;
 
-        StartCoroutine(FadeOutAndLoadScene());
+        StartCoroutine(FadeOutAndLoadScene("TitleScene"));
     }
 
-    public void OnExitButtonClicked()
-    {
-        // 既に遷移中の場合は何もしない
-        if (isTransitioning) return;
-
-        StartCoroutine(FadeOutAndQuit());
-    }
-
-    private IEnumerator FadeOutAndLoadScene()
-    {
-        // フェードアウト完了まで待機
-        yield return StartCoroutine(FadeOut());
-
-        SceneManager.LoadScene("GameScene1");
-    }
-
-    private IEnumerator FadeOutAndQuit()
-    {
-        // フェードアウト完了まで待機
-        yield return StartCoroutine(FadeOut());
-
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
-
-    private IEnumerator FadeOut()
+    private IEnumerator FadeOutAndLoadScene(string sceneName)
     {
         isTransitioning = true;
 
         if (fadeCanvasGroup != null)
         {
-            // フェード中は他のボタンを押せないように操作を遮断
+            // フェード中は他のボタンを押せないようにクリックを遮断
             fadeCanvasGroup.blocksRaycasts = true;
 
             float time = 0f;
@@ -77,10 +53,12 @@ public class TitleUIManager : MonoBehaviour
             {
                 time += Time.deltaTime;
                 fadeCanvasGroup.alpha = Mathf.Clamp01(time / fadeDuration);
-                yield return null;
+                yield return null; // 1フレーム待機
             }
 
             fadeCanvasGroup.alpha = 1f;
         }
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
     }
 }

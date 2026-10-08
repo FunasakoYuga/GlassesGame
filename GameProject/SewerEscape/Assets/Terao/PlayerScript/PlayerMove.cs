@@ -271,6 +271,7 @@ public class PlayerMove : MonoBehaviour
 
         // 最短回転となる角度差を計算（-180〜180度：正なら右回り、負なら左回り）
         float deltaYaw = Mathf.DeltaAngle(startYaw, targetYaw);
+
         // 目標の上下ピッチ角を算出
         float startPitch = cameraPitch;
         float targetPitch = 0f;
@@ -313,5 +314,27 @@ public class PlayerMove : MonoBehaviour
 
         isRotatingToTarget = false;
         lookCoroutine = null;
+    }
+
+    /// <summary>
+    /// アニメーションを一時停止する（被弾時・死亡時）
+    /// </summary>
+    public void PauseAnimation()
+    {
+        if (animator != null)
+        {
+            animator.speed = 0f;
+        }
+    }
+
+    /// <summary>
+    /// アニメーションを再開する（リスポーン完了時）
+    /// </summary>
+    public void ResumeAnimation()
+    {
+        if (animator != null)
+        {
+            animator.speed = 1f;
+        }
     }
 }

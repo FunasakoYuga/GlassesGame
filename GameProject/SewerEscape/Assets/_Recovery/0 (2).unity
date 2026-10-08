@@ -171,26 +171,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: DownMaxPitch
-      value: 40
-      objectReference: {fileID: 0}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: fadeCanvasGroup
       value: 
       objectReference: {fileID: 1651405571}
-    - target: {fileID: 6731071709962745490, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.002
-      objectReference: {fileID: 0}
-    - target: {fileID: 6731071709962745490, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.793
-      objectReference: {fileID: 0}
-    - target: {fileID: 6731071709962745490, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.235
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

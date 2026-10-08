@@ -51,8 +51,8 @@ public class PlayerMove : MonoBehaviour
         Vector2 moveInput = Vector2.zero;
         float yaw = 0f;
         float pitch = 0f;
-        bool isDashPressed = false;
-        bool isLookingBack = false;
+        bool isDashPressed = false; // ダッシュスピード
+        bool isLookingBack = false; // 視点反転フラグ
         bool isJump = false;
 
         // 移動入力
@@ -109,7 +109,7 @@ public class PlayerMove : MonoBehaviour
                 yaw = mouseDelta.x * MouselookSpeed * 0.1f;
                 pitch = mouseDelta.y * MouselookSpeed * 0.1f;
             }
-            if (Mouse.current.rightButton.isPressed) isLookingBack = true;
+            if (Mouse.current.leftButton.isPressed) isLookingBack = true;
         }
 
         // 視点操作

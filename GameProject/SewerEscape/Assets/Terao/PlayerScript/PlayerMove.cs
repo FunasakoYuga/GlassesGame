@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -20,6 +21,10 @@ public class PlayerMove : MonoBehaviour
     private CharacterController controller;
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
+
+    // 被弾時等の強制旋回制御用
+    private Coroutine lookCoroutine;
+    private bool isRotatingToTarget = false;
 
     // アニメーション制御用
     private Animator animator;
@@ -113,17 +118,20 @@ public class PlayerMove : MonoBehaviour
         }
 
         // 視点操作
-        if (Mathf.Abs(yaw) > 0.0001f)
+        if (!isRotatingToTarget)
         {
-            transform.Rotate(Vector3.up * yaw);
-        }
+            if (Mathf.Abs(yaw) > 0.0001f)
+            {
+                transform.Rotate(Vector3.up * yaw);
+            }
 
-        if (cameraTransform != null)
-        {
-            cameraPitch -= pitch;
-            cameraPitch = Mathf.Clamp(cameraPitch, UpMaxPitch, DownMaxPitch);
-            float yawOffset = isLookingBack ? 180f : 0f;
-            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, yawOffset, 0f);
+            if (cameraTransform != null)
+            {
+                cameraPitch -= pitch;
+                cameraPitch = Mathf.Clamp(cameraPitch, UpMaxPitch, DownMaxPitch);
+                float yawOffset = isLookingBack ? 180f : 0f;
+                cameraTransform.localRotation = Quaternion.Euler(cameraPitch, yawOffset, 0f);
+            }
         }
 
         // 移動処理
@@ -230,5 +238,80 @@ public class PlayerMove : MonoBehaviour
             cameraPitch = Mathf.Clamp(targetPitch, UpMaxPitch, DownMaxPitch);
             cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
         }
+    }
+
+    /// <summary>
+    /// 右回り（時計回り）に旋回しながら対象へ視点を合わせる
+    /// </summary>
+    /// <param name="targetPosition">向きたい目標位置（敵の位置）</param>
+    /// <param name="duration">旋回にかける時間（秒）</param>
+    public void RotateToTarget(Vector3 targetPosition, float duration = 0.4f)
+    {
+        if (lookCoroutine != null)
+        {
+            StopCoroutine(lookCoroutine);
+        }
+        lookCoroutine = StartCoroutine(RotateRightCoroutine(targetPosition, duration));
+    }
+
+    private IEnumerator RotateRightCoroutine(Vector3 targetPosition, float duration)
+    {
+        isRotatingToTarget = true;
+
+        Vector3 lookDirection = targetPosition - transform.position;
+        lookDirection.y = 0f;
+
+        float startYaw = transform.eulerAngles.y;
+        float targetYaw = startYaw;
+
+        if (lookDirection.sqrMagnitude > 0.001f)
+        {
+            targetYaw = Quaternion.LookRotation(lookDirection).eulerAngles.y;
+        }
+
+        // 最短回転となる角度差を計算（-180〜180度：正なら右回り、負なら左回り）
+        float deltaYaw = Mathf.DeltaAngle(startYaw, targetYaw);
+        // 目標の上下ピッチ角を算出
+        float startPitch = cameraPitch;
+        float targetPitch = 0f;
+        if (cameraTransform != null)
+        {
+            Vector3 camToTarget = targetPosition - cameraTransform.position;
+            float flatDistance = new Vector2(camToTarget.x, camToTarget.z).magnitude;
+            targetPitch = -Mathf.Atan2(camToTarget.y, flatDistance) * Mathf.Rad2Deg;
+            targetPitch = Mathf.Clamp(targetPitch, UpMaxPitch, DownMaxPitch);
+        }
+
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / duration);
+            float smoothT = Mathf.SmoothStep(0f, 1f, t);
+
+            // プレイヤー本体の水平回転（右回り）
+            float currentYaw = startYaw + deltaYaw * smoothT;
+            transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
+
+            // カメラの上下ピッチ回転
+            cameraPitch = Mathf.Lerp(startPitch, targetPitch, smoothT);
+            if (cameraTransform != null)
+            {
+                cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+            }
+
+            yield return null;
+        }
+
+        // 完了時に目標の向きへ確定
+        transform.rotation = Quaternion.Euler(0f, targetYaw, 0f);
+        cameraPitch = targetPitch;
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+        }
+
+        isRotatingToTarget = false;
+        lookCoroutine = null;
     }
 }

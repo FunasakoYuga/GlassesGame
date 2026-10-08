@@ -48,7 +48,7 @@ public class TitleUIManager : MonoBehaviour
         // フェードアウト完了まで待機
         yield return StartCoroutine(FadeOut());
 
-        SceneManager.LoadScene("GameScene1");
+        SceneManager.LoadScene("AllScene");
     }
 
     private IEnumerator FadeOutAndQuit()

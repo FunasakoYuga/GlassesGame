@@ -8,9 +8,14 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("フェード演出設定")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;           // 画面を覆うパネル
+    [SerializeField] private float lookWaitTime = 2.0f;             // 視点を向けてから暗転するまでの待機時間（秒）
     [Range(1.0f, 4.0f)]
     [SerializeField] private float fadeDuration = 1.5f;             // フェードイン / フェードアウト
+    [SerializeField] private float fadeInDuration = 3.0f;           // リスポーン時のゆっくりフェードインする時間（秒）
     [SerializeField] private float blackScreenWaitTime = 0.3f;      // フェードの停止時間（秒）
+
+    [Header("ゲームオーバーUI設定")]
+    [SerializeField] private GameObject gameOverPanel;              // 暗転後に表示するゲームオーバーパネル
 
     [Header("操作・視点設定")]
     [Tooltip("移動・視点操作を行っているPlayerMoveスクリプト")]
@@ -39,6 +44,12 @@ public class PlayerHealth : MonoBehaviour
         {
             fadeCanvasGroup.alpha = 0f;
             fadeCanvasGroup.blocksRaycasts = false;
+        }
+
+        // 開始時はゲームオーバーパネルを非表示にしておく
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
         }
     }
 
@@ -71,9 +82,9 @@ public class PlayerHealth : MonoBehaviour
         // 敵と接触したら敵のほうにカメラを向ける
         if (playerMove != null)
         {
-            // 敵の胴体あたりを見るように少し高さを加算（+1.0m）
+            // 敵の胴体あたりを見るように少し高さを増加
             Vector3 enemyCenter = target.transform.position + Vector3.up * 1.0f;
-            playerMove.LookAtPosition(enemyCenter);
+            playerMove.RotateToTarget(enemyCenter, 0.4f);
         }
 
         if (currentHits >= maxHits)
@@ -91,6 +102,9 @@ public class PlayerHealth : MonoBehaviour
     {
         // 操作と視点ロック
         SetPlayerInput(false);
+
+        // 視点を敵に向けてから2秒待機
+        yield return new WaitForSeconds(lookWaitTime);
 
         // 2. 徐々に暗転
         if (fadeCanvasGroup != null)
@@ -125,7 +139,7 @@ public class PlayerHealth : MonoBehaviour
         // 5. 徐々にフェードアウト
         if (fadeCanvasGroup != null)
         {
-            yield return StartCoroutine(Fade(1f, 0f, fadeDuration));
+            yield return StartCoroutine(Fade(1f, 0f, fadeInDuration));
             fadeCanvasGroup.blocksRaycasts = false;
         }
 
@@ -172,7 +186,11 @@ public class PlayerHealth : MonoBehaviour
         isDead = true;
         SetPlayerInput(false);
         Debug.Log("3回被弾したためゲームオーバー");
-        // 1. フェードアウト
+
+        // 視点を敵に向けてからフェードアウト待機
+        yield return new WaitForSeconds(lookWaitTime);
+
+        // フェードアウト
         if (fadeCanvasGroup != null)
         {
             fadeCanvasGroup.blocksRaycasts = true;
@@ -182,7 +200,15 @@ public class PlayerHealth : MonoBehaviour
             fadeCanvasGroup.alpha = 1f;
         }
 
-        // 2. プレイヤーの移動判定・当たり判定を停止
+        // フェードアウト後にマウスの操作を解放してカーソルを表示する
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        // プレイヤーの移動判定と当たり判定のロック
         if (characterController != null)
         {
             characterController.enabled = false;

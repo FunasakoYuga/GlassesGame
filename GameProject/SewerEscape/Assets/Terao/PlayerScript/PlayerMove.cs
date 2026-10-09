@@ -18,9 +18,22 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float UpMaxPitch = -90.0f;
     [SerializeField] private float DownMaxPitch = 90.0f;
 
+    [Header("サウンド設定")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip[] walkClips;         // Walk（歩行）用足音SE（複数登録でランダム再生）
+    [SerializeField] private AudioClip[] runClips;          // Run（ダッシュ）用足音SE（複数登録でランダム再生）
+    [SerializeField] private AudioClip[] jumpClips;         // Jump（ジャンプ）SE（複数登録でランダム再生）
+    [SerializeField] private float walkStepInterval = 0.5f; // 歩行時の足音間隔（秒）
+    [SerializeField] private float dashStepInterval = 0.3f; // ダッシュ時の足音間隔（秒）
+    [SerializeField] private float footstepVolume = 0.8f;   // 音量
+
     private CharacterController controller;
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
+
+    // 足音タイマーおよび接地判定追跡用
+    private float stepTimer = 0f;
+    private bool wasGrounded = true;
 
     // 被弾時等の強制旋回制御用
     private Coroutine lookCoroutine;
@@ -41,6 +54,11 @@ public class PlayerMove : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
+
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
 
         if (cameraTransform == null && Camera.main != null)
         {
@@ -148,6 +166,12 @@ public class PlayerMove : MonoBehaviour
         // 接地しているときは即座にジャンプ可能
         if (controller.isGrounded)
         {
+            // 空中から着地した瞬間に再生
+            if (!wasGrounded)
+            {
+                PlayJumpSound();
+            }
+
             if (verticalVelocity.y < 0)
             {
                 verticalVelocity.y = -2.0f;
@@ -162,11 +186,96 @@ public class PlayerMove : MonoBehaviour
             verticalVelocity.y -= Mathf.Abs(gravity) * Time.deltaTime;
         }
 
+        wasGrounded = controller.isGrounded;
+
         finalVelocity.y = verticalVelocity.y;
         controller.Move(finalVelocity * Time.deltaTime);
 
         // アニメーションをスクリプトから制御
         UpdateAnimation(moveInput, isDashPressed);
+
+        // 再生中アニメーション状態に応じた足音制御
+        HandleFootstepSound(moveInput);
+    }
+
+    /// <summary>
+    /// 現在のアニメーション状態に応じて足音SEと再生間隔を切り替える
+    /// </summary>
+    private void HandleFootstepSound(Vector2 moveInput)
+    {
+        // 空中にいる、または移動入力がない・アイドル時はタイマーリセット
+        if (!controller.isGrounded || moveInput.sqrMagnitude <= 0.01f || currentAnimationState == STATE_IDLE || currentAnimationState == STATE_JUMP)
+        {
+            stepTimer = 0f;
+            if (audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+            }
+            return;
+        }
+
+        // 後退系・前進系それぞれのアニメーションに応じた間隔の設定
+        bool isRunningState = (currentAnimationState == STATE_RUN || currentAnimationState == STATE_RUNBACK);
+        float currentInterval = isRunningState ? dashStepInterval : walkStepInterval;
+
+        stepTimer += Time.deltaTime;
+        if (stepTimer >= currentInterval)
+        {
+            PlayFootstepByState(currentAnimationState);
+            stepTimer = 0f;
+        }
+    }
+
+    /// <summary>
+    /// 各アニメーションステート専用のサウンド素材を選択して再生する
+    /// </summary>
+    /// <param name="stateName">アニメーションステート名（省略時は現在のステート）</param>
+    public void PlayFootstepByState(string stateName = "")
+    {
+        if (audioSource == null) return;
+
+        string state = string.IsNullOrEmpty(stateName) ? currentAnimationState : stateName;
+        AudioClip[] targetClips = null;
+
+        // ステートごとに個別のクリップ配列を参照
+        switch (state)
+        {
+            case STATE_WALK:
+            case STATE_WALKBACK:
+                targetClips = walkClips;
+                break;
+            case STATE_RUN:
+            case STATE_RUNBACK:
+                targetClips = runClips;
+                break;
+        }
+
+        if (targetClips != null && targetClips.Length > 0)
+        {
+            AudioClip clip = targetClips[Random.Range(0, targetClips.Length)];
+            if (clip != null)
+            {
+                audioSource.pitch = Random.Range(0.93f, 1.07f);
+                audioSource.clip = clip;
+                audioSource.volume = footstepVolume;
+                audioSource.Play();
+            }
+        }
+    }
+
+    /// <summary>
+    /// ジャンプ着地時のサウンド再生
+    /// </summary>
+    private void PlayJumpSound()
+    {
+        if (jumpClips == null || jumpClips.Length == 0) return;
+
+        AudioClip clip = jumpClips[Random.Range(0, jumpClips.Length)];
+        if (clip != null)
+        {
+            // 足音の停止処理に消されないよう、独立してSEを再生
+            AudioSource.PlayClipAtPoint(clip, transform.position, footstepVolume);
+        }
     }
 
     /// <summary>
@@ -274,7 +383,7 @@ public class PlayerMove : MonoBehaviour
 
         // 目標の上下ピッチ角を算出
         float startPitch = cameraPitch;
-        float targetPitch = 0f;
+        float targetPitch = startPitch;
         if (cameraTransform != null)
         {
             Vector3 camToTarget = targetPosition - cameraTransform.position;

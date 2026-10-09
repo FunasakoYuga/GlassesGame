@@ -172,21 +172,37 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: gravity
-      value: -18
-      objectReference: {fileID: 0}
-    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: moveSpeed
-      value: 5
-      objectReference: {fileID: 0}
+      propertyPath: audioSource
+      value: 
+      objectReference: {fileID: 514478930}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: DownMaxPitch
       value: 40
       objectReference: {fileID: 0}
-    - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
-      propertyPath: resultUI
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: runClips.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: jumpClips.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: walkClips.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: 'runClips.Array.data[0]'
       value: 
-      objectReference: {fileID: 1344045990}
+      objectReference: {fileID: 8300000, guid: 45ad1a1fb275e87499c6f76e8e365e3c, type: 3}
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: 'jumpClips.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 52a78b5ba3459cb40ae87f1b60045e67, type: 3}
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: 'walkClips.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 219237c330d0c244e98a3bce3d083203, type: 3}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: lookWaitTime
       value: 1
@@ -415,6 +431,11 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!82 &514478930 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 229116040225386652, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+  m_PrefabInstance: {fileID: 7754849}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

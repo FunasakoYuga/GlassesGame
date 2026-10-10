@@ -21,6 +21,10 @@ public class PlayerHealth : MonoBehaviour
     [Tooltip("移動・視点操作を行っているPlayerMoveスクリプト")]
     [SerializeField] private PlayerMove playerMove;
 
+    [Header("アニメーション・オーディオ設定")]
+    [SerializeField] private Animator playerAnimator;               // 停止させるアニメーター（未設定なら自動取得）
+    [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ（未設定なら自動取得）
+
     private int currentHits = 0;
     private bool isDead = false;
     private bool isRespawning = false;
@@ -38,6 +42,18 @@ public class PlayerHealth : MonoBehaviour
         if (playerMove == null)
         {
             playerMove = GetComponent<PlayerMove>();
+        }
+
+        // Animatorが未設定なら自身または子オブジェクトから取得
+        if (playerAnimator == null)
+        {
+            playerAnimator = GetComponentInChildren<Animator>();
+        }
+
+        // AudioSourceが未設定なら自身または子オブジェクトから全て取得
+        if (playerAudioSources == null || playerAudioSources.Length == 0)
+        {
+            playerAudioSources = GetComponentsInChildren<AudioSource>();
         }
 
         if (fadeCanvasGroup != null)
@@ -78,6 +94,9 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHits++;
         Debug.Log($"Enemyに接触！ 被弾回数: {currentHits}/{maxHits}");
+
+        // 敵に当たった瞬間にアニメーションとAudioを停止
+        StopAudioAndAnimation();
 
         // 敵と接触したら敵のほうにカメラを向ける
         if (playerMove != null)
@@ -145,6 +164,9 @@ public class PlayerHealth : MonoBehaviour
 
         // 6. 操作を再開
         SetPlayerInput(true);
+
+        // リスポーン完了後にアニメーションを再開
+        ResumeAnimation();
 
         isRespawning = false;
     }
@@ -229,5 +251,38 @@ public class PlayerHealth : MonoBehaviour
         }
 
         Debug.Log("ゲームオーバー：画面を暗転させたまま停止しました");
+    }
+
+    /// <summary>
+    /// Audioとアニメーションを停止する
+    /// </summary>
+    private void StopAudioAndAnimation()
+    {
+        if (playerAnimator != null)
+        {
+            playerAnimator.speed = 0f; // アニメーションをその場で一時停止
+        }
+
+        if (playerAudioSources != null)
+        {
+            foreach (AudioSource audio in playerAudioSources)
+            {
+                if (audio != null)
+                {
+                    audio.Stop(); // 足音や効果音を停止
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// アニメーションの再生速度を通常に戻す
+    /// </summary>
+    private void ResumeAnimation()
+    {
+        if (playerAnimator != null)
+        {
+            playerAnimator.speed = 1f;
+        }
     }
 }

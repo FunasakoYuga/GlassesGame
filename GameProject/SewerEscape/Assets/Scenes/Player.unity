@@ -212,9 +212,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1344045990}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: playerAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: fadeCanvasGroup
       value: 
       objectReference: {fileID: 1651405571}
+    - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: playerAudioSources.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6731071709962745490, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.002

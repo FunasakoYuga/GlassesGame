@@ -4,8 +4,9 @@ using UnityEngine.InputSystem;
 using TMPro;
 using Unity.VisualScripting;
 
-public class UIManagaer : MonoBehaviour
+public class UIManager : MonoBehaviour
 {
+    public static UIManager instance { get; private set; }
 
     [SerializeField] private string titileSceneName = "TitleScene";
 
@@ -31,12 +32,15 @@ public class UIManagaer : MonoBehaviour
     private int currentItem = 0;
     private int maxLives = 3;
     private int currentLives = 3;
-    private float passedTime = 0;
+    private float passedTime = 0.0f;
     private bool isGameActive = false;
 
     void Start()
     {
-        SetUpGameUI(10, 3);
+        hudPanel.SetActive(true);
+        resultPanel.SetActive(false);
+        gameOverPanel.SetActive(false);
+        if (objectiveText != null) objectiveText.text = "COLLECT ALL ITEMS";
     }
 
     void Update()
@@ -44,13 +48,9 @@ public class UIManagaer : MonoBehaviour
         if (isGameActive) passedTime += Time.deltaTime;
 
         // デバッグ用
-        if (Keyboard.current != null)
-        {
-
-        }
-        if (Keyboard.current.digit1Key.wasPressedThisFrame) OnItemCollected();
-        if (Keyboard.current.digit2Key.wasPressedThisFrame) OnPlayerDamaged();
-        if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
+        //if (Keyboard.current.digit1Key.wasPressedThisFrame) OnItemCollected();
+        //if (Keyboard.current.digit2Key.wasPressedThisFrame) OnPlayerDamaged();
+        //if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
     }
 
     // ゲーム開始時のUI初期化

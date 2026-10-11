@@ -1,3 +1,4 @@
+using System.Collections; // コルーチン用に追加
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
@@ -9,6 +10,11 @@ public class UIManager : MonoBehaviour
     public static UIManager instance { get; private set; }
 
     [SerializeField] private string titileSceneName = "TitleScene";
+
+    // フェード設定
+    [Header("フェード設定")]
+    [SerializeField] private CanvasGroup fadeCanvasGroup;   // フェード用の黒いパネル
+    [SerializeField] private float fadeDuration = 1.0f;     // フェードにかける秒数
 
     // HUD
     [SerializeField] private GameObject hudPanel;
@@ -27,7 +33,6 @@ public class UIManager : MonoBehaviour
     // ゲームオーバー
     [SerializeField] private GameObject gameOverPanel;
 
-
     private int maxItem = 10;
     private int currentItem = 0;
     private int maxLives = 3;
@@ -35,8 +40,20 @@ public class UIManager : MonoBehaviour
     private float passedTime = 0.0f;
     private bool isGameActive = false;
 
+    // 遷移中の連打防止フラグ
+    private bool isTransitioning = false;
+
     void Start()
     {
+        isTransitioning = false;
+
+        // フェードパネルの初期化（透明・クリック透過）
+        if (fadeCanvasGroup != null)
+        {
+            fadeCanvasGroup.alpha = 0f;
+            fadeCanvasGroup.blocksRaycasts = false;
+        }
+
         hudPanel.SetActive(true);
         resultPanel.SetActive(false);
         gameOverPanel.SetActive(false);
@@ -153,17 +170,49 @@ public class UIManager : MonoBehaviour
 
     public void OnReturnToTitle()
     {
-        SceneManager.LoadScene(titileSceneName);
+        if (isTransitioning) return;
+        StartCoroutine(FadeOutAndLoadScene(titileSceneName));
     }
+
     public void OnRetry()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (isTransitioning) return;
+        StartCoroutine(FadeOutAndLoadScene(SceneManager.GetActiveScene().name));
+    }
+
+    // フェードアウトしてからシーンを読み込む
+    private IEnumerator FadeOutAndLoadScene(string sceneName)
+    {
+        isTransitioning = true;
+
+        if (fadeCanvasGroup != null)
+        {
+            fadeCanvasGroup.gameObject.SetActive(true);
+            fadeCanvasGroup.transform.SetAsLastSibling(); // 最前面に描画
+            fadeCanvasGroup.blocksRaycasts = true;         // 入力禁止
+
+            float time = 0f;
+            while (time < fadeDuration)
+            {
+                time += Time.unscaledDeltaTime;
+                fadeCanvasGroup.alpha = Mathf.Clamp01(time / fadeDuration);
+                yield return null;
+            }
+
+            fadeCanvasGroup.alpha = 1f;
+        }
+
+        // シーン遷移前に時間と音をもとに戻す
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+
+        SceneManager.LoadScene(sceneName);
     }
 
     // デバッグ用
     private void UnlockCursur()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        //Cursor.lockState = CursorLockMode.None;
+        //Cursor.visible = true;
     }
 }

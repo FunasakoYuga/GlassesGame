@@ -1,10 +1,12 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.EventSystems; // コントローラーのボタン選択制御用に追加
 
 public class PlayerHealth : MonoBehaviour
 {
-    [Header("耐久設定")]
-    [SerializeField] private int maxHits = 3;                       // 3回目で完全フェードアウト
+    [Header("最大体力設定")]
+    [SerializeField] private int maxHp = 3;                       // 3回目で完全フェードアウト
 
     [Header("フェード演出設定")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;           // 画面を覆うパネル
@@ -16,6 +18,7 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("ゲームオーバーUI設定")]
     [SerializeField] private GameObject gameOverPanel;              // 暗転後に表示するゲームオーバーパネル
+    [SerializeField] private GameObject firstGameOverButton;        // 暗転後にコントローラーで最初に選択するボタン
 
     [Header("操作・視点設定")]
     [Tooltip("移動・視点操作を行っているPlayerMoveスクリプト")]
@@ -23,6 +26,8 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("アニメーション・オーディオ設定")]
     [SerializeField] private Animator playerAnimator;               // 停止させるアニメーター（未設定なら自動取得）
+    [SerializeField] private AudioSource GameOveraudioSource;               // ゲームオーバーオーディオ
+
     [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ（未設定なら自動取得）
     [SerializeField] private AudioClip[] dieClips;         // 死亡SE（複数登録でランダム再生）
     [SerializeField] private AudioClip gameOverClip;       // 3回死亡時（ゲームオーバー時）のSE
@@ -95,7 +100,7 @@ public class PlayerHealth : MonoBehaviour
     private void HandleHit(GameObject target)
     {
         currentHits++;
-        Debug.Log($"Enemyに接触！ 被弾回数: {currentHits}/{maxHits}");
+        Debug.Log($"Enemyに接触！ 被弾回数: {currentHits}/{maxHp}");
 
         // 敵に当たった瞬間にアニメーションとAudioを停止
         StopAudioAndAnimation();
@@ -111,7 +116,7 @@ public class PlayerHealth : MonoBehaviour
             playerMove.RotateToTarget(enemyCenter, 0.4f);
         }
 
-        if (currentHits >= maxHits)
+        if (currentHits >= maxHp)
         {
             StartCoroutine(Die());
         }
@@ -236,6 +241,12 @@ public class PlayerHealth : MonoBehaviour
 
             // 3回死亡（ゲームオーバー画面表示）時のSEを再生
             PlayGameOverSound();
+
+            // コントローラー用にゲームオーバーボタンを選択
+            if (firstGameOverButton != null && EventSystem.current != null)
+            {
+                StartCoroutine(SetSelectedGameOverButton(firstGameOverButton));
+            }
         }
 
         // プレイヤーの移動判定と当たり判定のロック
@@ -261,6 +272,17 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("ゲームオーバー：画面を暗転させたまま停止しました");
     }
 
+    // パネル表示後に確実にボタンを選択状態にするための待機コルーチン
+    private IEnumerator SetSelectedGameOverButton(GameObject target)
+    {
+        yield return null; // 1フレーム待機
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(target);
+        }
+    }
+
     /// <summary>
     /// Audioとアニメーションを停止する
     /// </summary>
@@ -284,7 +306,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 死亡SEをランダムに再生する
+    /// 死亡SE再生
     /// </summary>
     private void PlayDieSound()
     {
@@ -297,18 +319,19 @@ public class PlayerHealth : MonoBehaviour
         // プレイヤーのAudioSourceを使って再生（足音停止後なので確実に鳴る）
         if (playerAudioSources != null && playerAudioSources.Length > 0 && playerAudioSources[0] != null)
         {
-            playerAudioSources[0].PlayOneShot(clip);
+            playerAudioSources[0].volume = 1.0f;
+            playerAudioSources[0].PlayOneShot(clip, 1.0f);
         }
         else
         {
             // AudioSourceが取得できていない場合のフォールバック（プレイヤー位置で再生）
             Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
-            AudioSource.PlayClipAtPoint(clip, playPos);
+            AudioSource.PlayClipAtPoint(clip, playPos, 1.0f);
         }
     }
 
     /// <summary>
-    /// 3回死亡（ゲームオーバー画面表示）時のSEを再生する
+    /// ゲームオーバーBGM再生
     /// </summary>
     private void PlayGameOverSound()
     {
@@ -321,14 +344,22 @@ public class PlayerHealth : MonoBehaviour
 
         if (clipToPlay == null) return;
 
-        if (playerAudioSources != null && playerAudioSources.Length > 0 && playerAudioSources[0] != null)
+        // GameOveraudioSourceがインスペクターで設定されていればそれを優先、未設定ならplayerAudioSourcesを使用
+        AudioSource targetSource = GameOveraudioSource;
+        if (targetSource == null && playerAudioSources != null && playerAudioSources.Length > 0)
         {
-            playerAudioSources[0].PlayOneShot(clipToPlay);
+            targetSource = playerAudioSources[0];
+        }
+
+        if (targetSource != null)
+        {
+            targetSource.volume = 1.0f;
+            targetSource.PlayOneShot(clipToPlay, 1.0f);
         }
         else
         {
             Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
-            AudioSource.PlayClipAtPoint(clipToPlay, playPos);
+            AudioSource.PlayClipAtPoint(clipToPlay, playPos, 1.0f);
         }
     }
 

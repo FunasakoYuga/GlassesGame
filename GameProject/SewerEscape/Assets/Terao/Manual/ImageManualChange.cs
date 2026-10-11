@@ -12,10 +12,16 @@ public class ImageManualChange : MonoBehaviour
     [SerializeField] private GameObject padButton;      // キーボード表示中に押す「PAD」ボタン
     [SerializeField] private GameObject keyMouButton;   // パッド表示中に押す「KEY/MOUSE」ボタン
 
+    [Header("ボタン押下演出の待機時間（秒）")]
+    [SerializeField] private float pressDelay = 0.1f;   // パッドで押した色（灰色）が見えるようにする待機時間
+
+    // 切り替え中の連打防止フラグ
+    private bool isSwitching = false;
+
     private void Start()
     {
         // 開始時の初期状態を設定（キーボード・マウスを表示、パッドを非表示）
-        ShowKeyMouManual();
+        ShowKeyMouManualImmediate();
     }
 
     /// <summary>
@@ -23,7 +29,14 @@ public class ImageManualChange : MonoBehaviour
     /// </summary>
     public void ToggleManual()
     {
-        if (keyMouManual == null || padManual == null) return;
+        if (keyMouManual == null || padManual == null || isSwitching) return;
+        StartCoroutine(ToggleManualCoroutine());
+    }
+
+    private IEnumerator ToggleManualCoroutine()
+    {
+        isSwitching = true;
+        yield return new WaitForSecondsRealtime(pressDelay); // 押下色（灰色）を見せるため少し待機
 
         // 現在のキーボード表示状態を反転させて切り替え
         bool isKeyMouActive = keyMouManual.activeSelf;
@@ -36,12 +49,28 @@ public class ImageManualChange : MonoBehaviour
 
         // コントローラー用に選択フォーカスを切り替えたボタンへ移動
         SetSelected(!isKeyMouActive ? padButton : keyMouButton);
+
+        isSwitching = false;
     }
 
     /// <summary>
     /// キーボード・マウス操作説明を表示
     /// </summary>
     public void ShowKeyMouManual()
+    {
+        if (isSwitching) return;
+        StartCoroutine(ShowKeyMouManualCoroutine());
+    }
+
+    private IEnumerator ShowKeyMouManualCoroutine()
+    {
+        isSwitching = true;
+        yield return new WaitForSecondsRealtime(pressDelay);
+        ShowKeyMouManualImmediate();
+        isSwitching = false;
+    }
+
+    private void ShowKeyMouManualImmediate()
     {
         if (keyMouManual != null) keyMouManual.SetActive(true);
         if (padManual != null) padManual.SetActive(false);
@@ -59,6 +88,15 @@ public class ImageManualChange : MonoBehaviour
     /// </summary>
     public void ShowPadManual()
     {
+        if (isSwitching) return;
+        StartCoroutine(ShowPadManualCoroutine());
+    }
+
+    private IEnumerator ShowPadManualCoroutine()
+    {
+        isSwitching = true;
+        yield return new WaitForSecondsRealtime(pressDelay);
+
         if (keyMouManual != null) keyMouManual.SetActive(false);
         if (padManual != null) padManual.SetActive(true);
 
@@ -68,6 +106,8 @@ public class ImageManualChange : MonoBehaviour
 
         // コントローラー用にKeyMouseボタンを選択
         SetSelected(keyMouButton);
+
+        isSwitching = false;
     }
 
     /// <summary>

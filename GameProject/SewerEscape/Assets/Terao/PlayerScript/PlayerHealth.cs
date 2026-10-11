@@ -5,8 +5,8 @@ using UnityEngine.EventSystems; // コントローラーのボタン選択制御
 
 public class PlayerHealth : MonoBehaviour
 {
-    [Header("最大体力設定")]
-    [SerializeField] private int maxHp = 3;                       // 3回目で完全フェードアウト
+    [Header("耐久設定")]
+    [SerializeField] private int maxHits = 3;                       // 3回目で完全フェードアウト
 
     [Header("フェード演出設定")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;           // 画面を覆うパネル
@@ -35,6 +35,10 @@ public class PlayerHealth : MonoBehaviour
     private int currentHits = 0;
     private bool isDead = false;
     private bool isRespawning = false;
+
+    // 外部から演出中・死亡中かを確認するためのプロパティ（Pause制御用に追加）
+    public bool IsDead => isDead;
+    public bool IsRespawning => isRespawning;
 
     private Vector3 spawnPosition;
     private Quaternion spawnRotation;
@@ -100,7 +104,7 @@ public class PlayerHealth : MonoBehaviour
     private void HandleHit(GameObject target)
     {
         currentHits++;
-        Debug.Log($"Enemyに接触！ 被弾回数: {currentHits}/{maxHp}");
+        Debug.Log($"Enemyに接触！ 被弾回数: {currentHits}/{maxHits}");
 
         // 敵に当たった瞬間にアニメーションとAudioを停止
         StopAudioAndAnimation();
@@ -116,7 +120,7 @@ public class PlayerHealth : MonoBehaviour
             playerMove.RotateToTarget(enemyCenter, 0.4f);
         }
 
-        if (currentHits >= maxHp)
+        if (currentHits >= maxHits)
         {
             StartCoroutine(Die());
         }

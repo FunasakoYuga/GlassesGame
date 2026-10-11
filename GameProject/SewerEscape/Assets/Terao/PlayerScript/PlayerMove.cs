@@ -27,7 +27,7 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float dashStepInterval = 0.3f; // ダッシュ時の足音間隔（秒）
     [SerializeField] private float footstepVolume = 0.6f;   // 音量
 
-    private CharacterController controller;
+    private CharacterController characterController;
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
 
@@ -52,7 +52,7 @@ public class PlayerMove : MonoBehaviour
 
     void Awake()
     {
-        controller = GetComponent<CharacterController>();
+        characterController = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
 
         if (audioSource == null)
@@ -164,7 +164,7 @@ public class PlayerMove : MonoBehaviour
         Vector3 finalVelocity = move * currentSpeed;
 
         // 接地しているときは即座にジャンプ可能
-        if (controller.isGrounded)
+        if (characterController.isGrounded)
         {
             // 空中から着地した瞬間に再生
             if (!wasGrounded)
@@ -186,10 +186,13 @@ public class PlayerMove : MonoBehaviour
             verticalVelocity.y -= Mathf.Abs(gravity) * Time.deltaTime;
         }
 
-        wasGrounded = controller.isGrounded;
+        wasGrounded = characterController.isGrounded;
 
         finalVelocity.y = verticalVelocity.y;
-        controller.Move(finalVelocity * Time.deltaTime);
+        if (characterController != null && characterController.enabled)
+        {
+            characterController.Move(finalVelocity * Time.deltaTime);
+        }
 
         // アニメーションをスクリプトから制御
         UpdateAnimation(moveInput, isDashPressed);
@@ -204,7 +207,7 @@ public class PlayerMove : MonoBehaviour
     private void HandleFootstepSound(Vector2 moveInput)
     {
         // 空中にいる、または移動入力がない・アイドル時はタイマーリセット
-        if (!controller.isGrounded || moveInput.sqrMagnitude <= 0.01f || currentAnimationState == STATE_IDLE || currentAnimationState == STATE_JUMP)
+        if (!characterController.isGrounded || moveInput.sqrMagnitude <= 0.01f || currentAnimationState == STATE_IDLE || currentAnimationState == STATE_JUMP)
         {
             stepTimer = 0f;
             if (audioSource != null && audioSource.isPlaying)
@@ -288,7 +291,7 @@ public class PlayerMove : MonoBehaviour
         string targetState;
 
         // 地面についていない（空中・ジャンプ中）場合
-        if (!controller.isGrounded)
+        if (!characterController.isGrounded)
         {
             targetState = STATE_JUMP;
         }

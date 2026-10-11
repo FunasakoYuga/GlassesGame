@@ -182,7 +182,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.6
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -441,7 +441,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 52a78b5ba3459cb40ae87f1b60045e67, type: 3}
   walkStepInterval: 0.5
   dashStepInterval: 0.3
-  footstepVolume: 0.8
+  footstepVolume: 0.6
 --- !u!114 &4374232371068724811
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -454,14 +454,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 961e3c5155ae35c44ba64d99c756c4d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
-  maxHits: 3
+  maxHp: 3
   fadeCanvasGroup: {fileID: 0}
   lookWaitTime: 1
   fadeDuration: 1.5
   fadeInDuration: 3
   blackScreenWaitTime: 0.3
   gameOverPanel: {fileID: 0}
+  firstGameOverButton: {fileID: 0}
   playerMove: {fileID: 4184654544379862942}
+  playerAnimator: {fileID: 0}
+  GameOveraudioSource: {fileID: 0}
+  playerAudioSources: []
+  dieClips:
+  - {fileID: 8300000, guid: 09368881a8ca24c46bff381f80be787d, type: 3}
+  gameOverClip: {fileID: 8300000, guid: d4ee865dd3ace4a4a94761208ca60d68, type: 3}
 --- !u!54 &674128938700946090
 Rigidbody:
   m_ObjectHideFlags: 0

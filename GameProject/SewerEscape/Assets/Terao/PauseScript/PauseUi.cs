@@ -39,6 +39,9 @@ public class PauseManager : MonoBehaviour
     [Header("操作説明内の戻るボタン（あれば設定）")]
     [SerializeField] private GameObject manualBackButton;
 
+    [Header("プレイヤーの体力スクリプト（被弾中のポーズ禁止用）")]
+    [SerializeField] private PlayerHealth playerHealth;
+
     [Header("ボタン押下演出の待機時間（秒）")]
     [SerializeField] private float pressDelay = 0.1f;   // パッドで押した色（灰色）が見えるようにする待機時間
 
@@ -57,6 +60,12 @@ public class PauseManager : MonoBehaviour
         IsPaused = false;
         isTransitioning = false;
         isSwitching = false;
+
+        // PlayerHealthが未設定なら自動取得
+        if (playerHealth == null)
+        {
+            playerHealth = FindFirstObjectByType<PlayerHealth>();
+        }
 
         // 音の停止状態もリセット
         AudioListener.pause = false;
@@ -92,6 +101,12 @@ public class PauseManager : MonoBehaviour
             if (manualCanvas != null && manualCanvas.activeSelf)
             {
                 CloseManual();
+                return;
+            }
+
+            // 被弾演出中（リスポーン待機中）または死亡時はポーズを開かせない
+            if (!IsPaused && playerHealth != null && (playerHealth.IsRespawning || playerHealth.IsDead))
+            {
                 return;
             }
 
@@ -174,14 +189,18 @@ public class PauseManager : MonoBehaviour
         // 操作説明UIも非表示に戻しておく
         ResetManualUI();
 
-        // 視点操作スクリプトを再開
-        if (cameraController != null)
+        // プレイヤーが被弾中・死亡中ではない場合のみ、視点操作スクリプトを再開
+        bool canControl = playerHealth == null || (!playerHealth.IsRespawning && !playerHealth.IsDead);
+        if (cameraController != null && canControl)
         {
             cameraController.enabled = true;
         }
 
-        // マウスカーソルを再度非表示・中央固定
-        LockCursor();
+        // プレイヤーが操作可能な状態ならカーソルをロック、死亡中ならカーソルを出したままにする
+        if (canControl)
+        {
+            LockCursor();
+        }
 
         // 選択状態を解除
         if (EventSystem.current != null)

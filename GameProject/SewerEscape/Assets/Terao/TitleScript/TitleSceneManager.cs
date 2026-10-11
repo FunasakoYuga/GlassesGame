@@ -15,6 +15,9 @@ public class TitleSceneManager : MonoBehaviour
 
     void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // 開始時はフェード画面を透明にしてクリックを通すように設定
         if (fadeCanvasGroup != null)
         {
@@ -23,9 +26,12 @@ public class TitleSceneManager : MonoBehaviour
         }
     }
 
-    void Update()
+    public void OnStartButtonClicked()
     {
+        // 既に遷移中の場合は何もしない
+        if (isTransitioning) return;
 
+        StartCoroutine(FadeOutAndLoadScene("AllScene"));
     }
 
     /// <summary>
@@ -39,13 +45,41 @@ public class TitleSceneManager : MonoBehaviour
         StartCoroutine(FadeOutAndLoadScene("ManualScene"));
     }
 
+    public void OnExitButtonClicked()
+    {
+        // 既に遷移中の場合は何もしない
+        if (isTransitioning) return;
+
+        StartCoroutine(FadeOutAndQuit());
+    }
+
     private IEnumerator FadeOutAndLoadScene(string sceneName)
+    {
+        // フェードアウト完了まで待機
+        yield return StartCoroutine(FadeOut());
+
+        SceneManager.LoadScene(sceneName);
+    }
+
+    private IEnumerator FadeOutAndQuit()
+    {
+        // フェードアウト完了まで待機
+        yield return StartCoroutine(FadeOut());
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    private IEnumerator FadeOut()
     {
         isTransitioning = true;
 
         if (fadeCanvasGroup != null)
         {
-            // フェード中は他のボタンを押せないようにクリックを遮断
+            // フェード中は他のボタンを押せないように操作を遮断
             fadeCanvasGroup.blocksRaycasts = true;
 
             float time = 0f;
@@ -58,7 +92,5 @@ public class TitleSceneManager : MonoBehaviour
 
             fadeCanvasGroup.alpha = 1f;
         }
-
-        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
     }
 }

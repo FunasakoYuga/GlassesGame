@@ -213,6 +213,7 @@ MonoBehaviour:
   padManual: {fileID: 146478813}
   padButton: {fileID: 1644270479}
   keyMouButton: {fileID: 1194608784}
+  pressDelay: 0.1
 --- !u!114 &130752118
 MonoBehaviour:
   m_ObjectHideFlags: 0

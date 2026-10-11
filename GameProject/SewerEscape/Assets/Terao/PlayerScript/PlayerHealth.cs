@@ -24,6 +24,8 @@ public class PlayerHealth : MonoBehaviour
     [Header("アニメーション・オーディオ設定")]
     [SerializeField] private Animator playerAnimator;               // 停止させるアニメーター（未設定なら自動取得）
     [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ（未設定なら自動取得）
+    [SerializeField] private AudioClip[] dieClips;         // 死亡SE（複数登録でランダム再生）
+    [SerializeField] private AudioClip gameOverClip;       // 3回死亡時（ゲームオーバー時）のSE
 
     private int currentHits = 0;
     private bool isDead = false;
@@ -97,6 +99,9 @@ public class PlayerHealth : MonoBehaviour
 
         // 敵に当たった瞬間にアニメーションとAudioを停止
         StopAudioAndAnimation();
+
+        // 死亡SEを再生
+        PlayDieSound();
 
         // 敵と接触したら敵のほうにカメラを向ける
         if (playerMove != null)
@@ -228,6 +233,9 @@ public class PlayerHealth : MonoBehaviour
             gameOverPanel.SetActive(true);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+
+            // 3回死亡（ゲームオーバー画面表示）時のSEを再生
+            PlayGameOverSound();
         }
 
         // プレイヤーの移動判定と当たり判定のロック
@@ -272,6 +280,55 @@ public class PlayerHealth : MonoBehaviour
                     audio.Stop(); // 足音や効果音を停止
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// 死亡SEをランダムに再生する
+    /// </summary>
+    private void PlayDieSound()
+    {
+        if (dieClips == null || dieClips.Length == 0) return;
+
+        // 登録されているクリップの中からランダムに1つ選択
+        AudioClip clip = dieClips[Random.Range(0, dieClips.Length)];
+        if (clip == null) return;
+
+        // プレイヤーのAudioSourceを使って再生（足音停止後なので確実に鳴る）
+        if (playerAudioSources != null && playerAudioSources.Length > 0 && playerAudioSources[0] != null)
+        {
+            playerAudioSources[0].PlayOneShot(clip);
+        }
+        else
+        {
+            // AudioSourceが取得できていない場合のフォールバック（プレイヤー位置で再生）
+            Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
+            AudioSource.PlayClipAtPoint(clip, playPos);
+        }
+    }
+
+    /// <summary>
+    /// 3回死亡（ゲームオーバー画面表示）時のSEを再生する
+    /// </summary>
+    private void PlayGameOverSound()
+    {
+        // 専用のGameOverClipがあればそれを再生、未設定ならdieClipsから再生
+        AudioClip clipToPlay = gameOverClip;
+        if (clipToPlay == null && dieClips != null && dieClips.Length > 0)
+        {
+            clipToPlay = dieClips[Random.Range(0, dieClips.Length)];
+        }
+
+        if (clipToPlay == null) return;
+
+        if (playerAudioSources != null && playerAudioSources.Length > 0 && playerAudioSources[0] != null)
+        {
+            playerAudioSources[0].PlayOneShot(clipToPlay);
+        }
+        else
+        {
+            Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
+            AudioSource.PlayClipAtPoint(clipToPlay, playPos);
         }
     }
 

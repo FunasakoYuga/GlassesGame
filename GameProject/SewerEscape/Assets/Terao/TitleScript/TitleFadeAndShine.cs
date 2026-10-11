@@ -81,6 +81,12 @@ public class TitleFadeAndShine : MonoBehaviour
         // --- 1. タイトル1のフェードイン ---
         if (titleCanvasGroup1 != null)
         {
+            // フェードイン中にもタイトル1を発光させる（並行実行）
+            if (titleGraphic1 != null)
+            {
+                StartCoroutine(FlashShineRoutine(titleGraphic1, originalColor1, flashDuration1));
+            }
+
             yield return StartCoroutine(FadeInGroup(titleCanvasGroup1, fadeInDuration1));
         }
 
@@ -90,6 +96,12 @@ public class TitleFadeAndShine : MonoBehaviour
         // --- 2. タイトル2のフェードイン ---
         if (titleCanvasGroup2 != null)
         {
+            // フェードイン中にもタイトル2を発光させる（並行実行）
+            if (titleGraphic2 != null)
+            {
+                StartCoroutine(FlashShineRoutine(titleGraphic2, originalColor2, flashDuration2));
+            }
+
             yield return StartCoroutine(FadeInGroup(titleCanvasGroup2, fadeInDuration2));
         }
 

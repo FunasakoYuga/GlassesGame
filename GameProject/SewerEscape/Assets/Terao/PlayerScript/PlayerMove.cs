@@ -25,7 +25,7 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private AudioClip[] jumpClips;         // Jump（ジャンプ）SE（複数登録でランダム再生）
     [SerializeField] private float walkStepInterval = 0.5f; // 歩行時の足音間隔（秒）
     [SerializeField] private float dashStepInterval = 0.3f; // ダッシュ時の足音間隔（秒）
-    [SerializeField] private float footstepVolume = 0.8f;   // 音量
+    [SerializeField] private float footstepVolume = 0.6f;   // 音量
 
     private CharacterController controller;
     private Vector3 verticalVelocity;
@@ -237,7 +237,7 @@ public class PlayerMove : MonoBehaviour
         string state = string.IsNullOrEmpty(stateName) ? currentAnimationState : stateName;
         AudioClip[] targetClips = null;
 
-        // ステートごとに個別のクリップ配列を参照
+        // ステートごとに個別のクリップを参照
         switch (state)
         {
             case STATE_WALK:

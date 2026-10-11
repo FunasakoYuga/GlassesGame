@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+public class FadeOut : MonoBehaviour
 {
     [Header("フェード用のCanvasGroup（黒いパネル）")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;
@@ -20,10 +20,10 @@ public class NewMonoBehaviourScript : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    //void Update()
+    //{
 
-    }
+    //}
 
     // 黒画面から徐々にゲーム画面を明るくする処理（フェードイン）
     private IEnumerator FadeIn()

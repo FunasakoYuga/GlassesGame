@@ -2141,7 +2141,7 @@ MonoBehaviour:
   titleGraphic2: {fileID: 1405419283}
   shineInterval: 3
   flashDuration1: 1
-  flashDuration2: 1
+  flashDuration2: 1.2
   delayBetweenShines: 0
   shineColor: {r: 1, g: 0, b: 0, a: 1}
   buttonCanvasGroup: {fileID: 1118174010}

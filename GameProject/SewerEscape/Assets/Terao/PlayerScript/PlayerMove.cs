@@ -20,12 +20,18 @@ public class PlayerMove : MonoBehaviour
 
     [Header("サウンド設定")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip[] walkClips;         // Walk（歩行）用足音SE（複数登録でランダム再生）
-    [SerializeField] private AudioClip[] runClips;          // Run（ダッシュ）用足音SE（複数登録でランダム再生）
-    [SerializeField] private AudioClip[] jumpClips;         // Jump（ジャンプ）SE（複数登録でランダム再生）
+    [SerializeField] private AudioClip[] walkClips;         // 歩行用SE
+    [SerializeField] private AudioClip[] runClips;          // ダッシュ用SE
+    [SerializeField] private AudioClip[] jumpClips;         // ジャンプSE
     [SerializeField] private float walkStepInterval = 0.5f; // 歩行時の足音間隔（秒）
     [SerializeField] private float dashStepInterval = 0.3f; // ダッシュ時の足音間隔（秒）
     [SerializeField] private float footstepVolume = 0.6f;   // 音量
+    [Range(0f, 1f)]
+    [SerializeField] private float walkVolume = 0.5f;       // 歩行時の足音音量
+    [Range(0f, 1f)]
+    [SerializeField] private float runVolume = 0.7f;        // ダッシュ時の足音音量
+    [Range(0f, 1f)]
+    [SerializeField] private float jumpVolume = 0.8f;       // ジャンプ着地時の音量
 
     private CharacterController characterController;
     private Vector3 verticalVelocity;
@@ -239,17 +245,20 @@ public class PlayerMove : MonoBehaviour
 
         string state = string.IsNullOrEmpty(stateName) ? currentAnimationState : stateName;
         AudioClip[] targetClips = null;
+        float targetVolume = footstepVolume; // デフォルト音量
 
-        // ステートごとに個別のクリップを参照
+        // ステートごとに個別のクリップおよび音量を参照
         switch (state)
         {
             case STATE_WALK:
             case STATE_WALKBACK:
                 targetClips = walkClips;
+                targetVolume = walkVolume;
                 break;
             case STATE_RUN:
             case STATE_RUNBACK:
                 targetClips = runClips;
+                targetVolume = runVolume;
                 break;
         }
 
@@ -260,7 +269,7 @@ public class PlayerMove : MonoBehaviour
             {
                 audioSource.pitch = Random.Range(0.93f, 1.07f);
                 audioSource.clip = clip;
-                audioSource.volume = footstepVolume;
+                audioSource.volume = targetVolume;
                 audioSource.Play();
             }
         }
@@ -277,7 +286,7 @@ public class PlayerMove : MonoBehaviour
         if (clip != null)
         {
             // 足音の停止処理に消されないよう、独立してSEを再生
-            AudioSource.PlayClipAtPoint(clip, transform.position, footstepVolume);
+            AudioSource.PlayClipAtPoint(clip, transform.position, jumpVolume);
         }
     }
 
@@ -353,7 +362,7 @@ public class PlayerMove : MonoBehaviour
     }
 
     /// <summary>
-    /// 右回り（時計回り）に旋回しながら対象へ視点を合わせる
+    /// 向いてる角度によって敵のほうを向く
     /// </summary>
     /// <param name="targetPosition">向きたい目標位置（敵の位置）</param>
     /// <param name="duration">旋回にかける時間（秒）</param>
@@ -381,7 +390,7 @@ public class PlayerMove : MonoBehaviour
             targetYaw = Quaternion.LookRotation(lookDirection).eulerAngles.y;
         }
 
-        // 最短回転となる角度差を計算（-180〜180度：正なら右回り、負なら左回り）
+        // 敵に近いほうの角度で視点を向ける
         float deltaYaw = Mathf.DeltaAngle(startYaw, targetYaw);
 
         // 目標の上下ピッチ角を算出

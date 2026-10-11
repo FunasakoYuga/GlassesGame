@@ -363,7 +363,7 @@ public class PlayerHealth : MonoBehaviour
         else
         {
             Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
-            AudioSource.PlayClipAtPoint(clipToPlay, playPos, 1.0f);
+            AudioSource.PlayClipAtPoint(clipToPlay, playPos, 0.8f);
         }
     }
 

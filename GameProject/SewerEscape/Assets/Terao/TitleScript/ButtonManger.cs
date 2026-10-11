@@ -1,7 +1,9 @@
+using System.Collections; // 実時間での破棄コルーチン用に追加
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement; // 現在のシーン名を取得するために追加
 using TMPro;
 
 public class ButtonManager : MonoBehaviour
@@ -11,6 +13,10 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Color normalColor = Color.white;     // 通常時の文字色
     [SerializeField] private Color highlightColor = Color.red;    // 選択中の文字色
 
+    [Header("サウンド設定")]
+    [SerializeField] private AudioClip clickSound;                // ボタンを押した時のSE
+    [SerializeField] private bool autoAddClickSound = true;       // シーン内の全ボタンに自動でクリック音を登録するか
+
     // 最後に選択されていたボタンを保持する変数
     private GameObject lastSelectedObject;
 
@@ -19,7 +25,27 @@ public class ButtonManager : MonoBehaviour
 
     void Start()
     {
-        
+        // シーン内のButtonコンポーネントすべてに自動でクリック音を付与
+        if (autoAddClickSound)
+        {
+            string currentSceneName = SceneManager.GetActiveScene().name;
+            // 非アクティブ（非表示）状態のPauseパネルなどのボタンも含めてすべて取得
+            Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (Button btn in buttons)
+            {
+                // ManualSceneまたはAllSceneのとき、PadButtonとKeyMouButtonを除外
+                if (currentSceneName == "ManualScene" || currentSceneName == "AllScene")
+                {
+                    string btnName = btn.gameObject.name.ToLower();
+                    if (btnName.Contains("pad") || btnName.Contains("keymou")|| btnName.Contains("back"))
+                    {
+                        continue;
+                    }
+                }
+
+                btn.onClick.AddListener(PlayClickSound);
+            }
+        }
     }
 
     void Update()
@@ -52,6 +78,38 @@ public class ButtonManager : MonoBehaviour
         {
             EventSystem.current.SetSelectedGameObject(lastSelectedObject);
             SetTextColor(lastSelectedObject, highlightColor);
+        }
+    }
+
+    /// <summary>
+    /// ボタン決定音を再生する（シーン遷移しても途切れないようDontDestroyOnLoadで再生）
+    /// </summary>
+    public void PlayClickSound()
+    {
+        if (clickSound == null) return;
+
+        // シーン遷移しても音が消えない専用の一時オブジェクトを生成
+        GameObject soundObj = new GameObject("ButtonSE_DontDestroy");
+        DontDestroyOnLoad(soundObj);
+
+        AudioSource audioSource = soundObj.AddComponent<AudioSource>();
+        audioSource.clip = clickSound;
+        audioSource.playOnAwake = false;
+        audioSource.volume = 1.0f;
+        audioSource.ignoreListenerPause = true; // ポーズ中（AudioListener.pause = true）でも音を鳴らす設定
+        audioSource.Play();
+
+        // ポーズ中（Time.timeScale = 0）でも実時間で確実に破棄する
+        StartCoroutine(DestroyAfterPlayRealtime(soundObj, clickSound.length));
+    }
+
+    // ポーズ中（時間停止中）でも実時間でオブジェクトを破棄するコルーチン
+    private IEnumerator DestroyAfterPlayRealtime(GameObject target, float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        if (target != null)
+        {
+            Destroy(target);
         }
     }
 

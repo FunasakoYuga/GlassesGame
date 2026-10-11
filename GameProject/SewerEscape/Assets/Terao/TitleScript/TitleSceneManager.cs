@@ -10,6 +10,9 @@ public class TitleSceneManager : MonoBehaviour
     [Header("フェードにかける時間（秒）")]
     [SerializeField] private float fadeDuration = 1.0f;
 
+    [Header("BGM設定（ManualScene遷移時も残すAudioSource）")]
+    [SerializeField] private AudioSource bgmAudioSource;
+
     // 連打防止用フラグ
     private bool isTransitioning = false;
 
@@ -23,6 +26,21 @@ public class TitleSceneManager : MonoBehaviour
         {
             fadeCanvasGroup.alpha = 0f;
             fadeCanvasGroup.blocksRaycasts = false;
+        }
+
+        // ManualSceneから戻ってきた際に、BGMが2重に鳴るのを防ぎつつ参照を維持
+        if (bgmAudioSource != null)
+        {
+            AudioSource[] sources = FindObjectsByType<AudioSource>(FindObjectsSortMode.None);
+            foreach (var src in sources)
+            {
+                if (src != bgmAudioSource && src.clip == bgmAudioSource.clip)
+                {
+                    Destroy(bgmAudioSource.gameObject);
+                    bgmAudioSource = src;
+                    break;
+                }
+            }
         }
     }
 
@@ -42,6 +60,12 @@ public class TitleSceneManager : MonoBehaviour
         // 既に遷移中の場合は何もしない（連打防止）
         if (isTransitioning) return;
 
+        // ManualSceneに行くときはBGMを破棄させずに残す
+        if (bgmAudioSource != null)
+        {
+            DontDestroyOnLoad(bgmAudioSource.gameObject);
+        }
+
         StartCoroutine(FadeOutAndLoadScene("ManualScene"));
     }
 
@@ -55,8 +79,18 @@ public class TitleSceneManager : MonoBehaviour
 
     private IEnumerator FadeOutAndLoadScene(string sceneName)
     {
+        // ManualScene以外の場合はBGMも徐々にフェードアウトさせる
+        bool shouldFadeBgm = (sceneName != "ManualScene");
+
         // フェードアウト完了まで待機
-        yield return StartCoroutine(FadeOut());
+        yield return StartCoroutine(FadeOut(shouldFadeBgm));
+
+        // ManualScene以外（AllSceneなど）へ行くときはBGMを完全に停止・破棄する
+        if (shouldFadeBgm && bgmAudioSource != null)
+        {
+            bgmAudioSource.Stop();
+            Destroy(bgmAudioSource.gameObject);
+        }
 
         SceneManager.LoadScene(sceneName);
     }
@@ -64,7 +98,7 @@ public class TitleSceneManager : MonoBehaviour
     private IEnumerator FadeOutAndQuit()
     {
         // フェードアウト完了まで待機
-        yield return StartCoroutine(FadeOut());
+        yield return StartCoroutine(FadeOut(fadeBgm: true));
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
@@ -73,9 +107,12 @@ public class TitleSceneManager : MonoBehaviour
 #endif
     }
 
-    private IEnumerator FadeOut()
+    private IEnumerator FadeOut(bool fadeBgm = true)
     {
         isTransitioning = true;
+
+        // フェード開始時の元の音量を記録
+        float startVolume = bgmAudioSource != null ? bgmAudioSource.volume : 1f;
 
         if (fadeCanvasGroup != null)
         {
@@ -86,11 +123,25 @@ public class TitleSceneManager : MonoBehaviour
             while (time < fadeDuration)
             {
                 time += Time.deltaTime;
-                fadeCanvasGroup.alpha = Mathf.Clamp01(time / fadeDuration);
+                float progress = Mathf.Clamp01(time / fadeDuration);
+                fadeCanvasGroup.alpha = progress;
+
+                // ManualScene以外へ行くときは画面暗転に合わせて音量を徐々に下げる
+                if (fadeBgm && bgmAudioSource != null)
+                {
+                    bgmAudioSource.volume = Mathf.Lerp(startVolume, 0f, progress);
+                }
+
                 yield return null; // 1フレーム待機
             }
 
             fadeCanvasGroup.alpha = 1f;
+        }
+
+        // フェードアウト完了時に確実に音量を0にしておく
+        if (fadeBgm && bgmAudioSource != null)
+        {
+            bgmAudioSource.volume = 0f;
         }
     }
 }

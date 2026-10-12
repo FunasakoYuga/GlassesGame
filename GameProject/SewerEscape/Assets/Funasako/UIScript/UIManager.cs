@@ -41,6 +41,7 @@ public class UIManager : MonoBehaviour
     private int m_currentHits = 0;
     private float m_passedTime = 0.0f;
     private bool m_isGameActive = false;
+    private bool m_checkMaxItem = false;
 
     [SerializeField] private KeyFgmManager m_keymanager;
     [SerializeField] private PlayerHealth m_playerHealth;
@@ -67,8 +68,7 @@ public class UIManager : MonoBehaviour
         m_resultPanel.SetActive(false);
         m_objectiveText.text = "COLLECT ALL ITEMS";
 
-        // アイテム数初期値を記録
-        m_maxItem = m_keymanager.GetKeyFgmNum();
+      
 
         // ↓重い処理らしいので普通にGet関数とか取得できるようにしてもらう
 
@@ -85,6 +85,13 @@ void Update()
     {
         if (!m_isGameActive) return;
 
+        if (m_passedTime > 0 && !m_checkMaxItem)
+        {
+            m_checkMaxItem = true;
+            // アイテム数初期値を記録
+            m_maxItem = m_keymanager.GetKeyFgmNum();
+        }
+
         m_passedTime += Time.deltaTime;
 
         m_currentItem = m_keymanager.GetKeyFgmNum();
@@ -92,17 +99,17 @@ void Update()
 
         if (m_keymanager.IsGameClear())
         {
-            m_objectiveText.text = "GET BACK TO THE PORTAL";
+            m_objectiveText.text = "BACK TO THE PORTAL";
         }
 
         m_currentHits = (int)m_hitsField.GetValue(m_playerHealth);
         m_currentLives = m_maxLivesMemo - m_currentHits;
-        m_lifeText.text = "LIVES:" + m_currentLives.ToString();
+        m_lifeText.text = m_currentLives.ToString();
 
         // デバッグ用
         //if (Keyboard.current.digit1Key.wasPressedThisFrame) OnItemCollected();
         //if (Keyboard.current.digit2Key.wasPressedThisFrame) OnPlayerDamaged();
-        //if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
+        if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
     }
 
     // ゲーム開始時のUI初期化
@@ -172,22 +179,23 @@ void Update()
 
         int minites = Mathf.FloorToInt(m_passedTime / 60F);
         int seconds = Mathf.FloorToInt(m_passedTime % 60F);
-        m_timeScoreText.text = string.Format("TIME: { 0:0 } { 1:00 }", minites, seconds);
-        
+        m_timeScoreText.text = $"{minites:00}:{seconds:00}";
+
+
+        m_itemScoreText.text = (m_maxItem - m_currentItem).ToString();
 
         int lostLife = m_maxLivesMemo - m_currentHits;
-        if (m_itemScoreText != null) m_itemScoreText.text = "COLLECT ITEM: " + (m_maxItem - m_currentItem);
-        if (m_lostLifeText != null) m_lostLifeText.text = "LOST LIFE: " + lostLife;
+        m_lostLifeText.text = lostLife.ToString() ;
 
         int totalScore = (m_currentItem * 10) + (m_currentHits * 50);
-        if (m_totalScoreText != null) m_totalScoreText.text = "TOTAL SCORE: " + totalScore;
+        m_totalScoreText.text = totalScore.ToString();
 
         string rank = "C";
         if (lostLife == 0 && m_currentItem >= m_maxItem) rank = "S";
         else if (lostLife == 1) rank = "A";
         else if (lostLife == 2) rank = "B";
 
-        if (m_finalRankText != null) m_finalRankText.text = "FINAL RANK: " + rank;
+        m_finalRankText.text = rank.ToString();
 
         UnlockCursur();
     }

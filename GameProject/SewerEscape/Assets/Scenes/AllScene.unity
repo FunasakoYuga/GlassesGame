@@ -210,7 +210,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: footstepVolume
-      value: 0.4
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: forwardOffsetZ
@@ -223,6 +223,10 @@ PrefabInstance:
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: dashStepInterval
       value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: walkStepInterval
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: gameOverClip
@@ -267,6 +271,10 @@ PrefabInstance:
     - target: {fileID: 8014907492877736408, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: m_CullingMask.m_Bits
       value: 55
+      objectReference: {fileID: 0}
+    - target: {fileID: 8462279813848469693, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1957,7 +1965,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!82 &483023086
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4557,7 +4565,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1702771560}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1702771563
 Camera:
   m_ObjectHideFlags: 0

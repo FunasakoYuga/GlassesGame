@@ -5,6 +5,10 @@ using UnityEngine.InputSystem;
 using TMPro;
 using Unity.VisualScripting;
 using System.Reflection;
+using UnityEngine.UI;
+using UnityEngine.UIElements;
+
+
 
 public class UIManager : MonoBehaviour
 {
@@ -30,6 +34,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI m_lostLifeText;
     [SerializeField] private TextMeshProUGUI m_totalScoreText;
     [SerializeField] private TextMeshProUGUI m_finalRankText;
+    [SerializeField] private GameObject m_button;
 
     // ゲームオーバー
     [SerializeField] private GameObject m_gameOverPanel;
@@ -40,11 +45,17 @@ public class UIManager : MonoBehaviour
     private int m_currentLives = 3;
     private int m_currentHits = 0;
     private float m_passedTime = 0.0f;
+    private float m_scoreDelayTime = 0.5f;
+    private float m_rankDelayTime = 1.0f;
     private bool m_isGameActive = false;
     private bool m_checkMaxItem = false;
 
     [SerializeField] private KeyFgmManager m_keymanager;
     [SerializeField] private PlayerHealth m_playerHealth;
+
+    public AudioSource m_audioSource;
+    public AudioClip m_scoreSe;
+    public AudioClip m_rankSe;
 
     // リフレクション
     private FieldInfo m_hitsField;
@@ -177,27 +188,66 @@ void Update()
         m_hudPanel.SetActive(false);
         m_resultPanel.SetActive(true);
 
+        m_timeScoreText.gameObject.SetActive(false);
+        m_itemScoreText.gameObject.SetActive(false);
+        m_lostLifeText.gameObject.SetActive(false);
+        m_totalScoreText.gameObject.SetActive(false);
+        m_finalRankText.gameObject.SetActive(false);
+        m_button.SetActive(false);
+
+        StartCoroutine(ShowResultSequence());
+
+        UnlockCursur();
+    }
+
+    private IEnumerator ShowResultSequence()
+    {
+        yield return new WaitForSeconds(m_scoreDelayTime);
+
         int minites = Mathf.FloorToInt(m_passedTime / 60F);
         int seconds = Mathf.FloorToInt(m_passedTime % 60F);
         m_timeScoreText.text = $"{minites:00}:{seconds:00}";
+        m_timeScoreText.gameObject.SetActive(true);
+        PlaySESound(m_scoreSe);
 
+
+        yield return new WaitForSeconds(m_scoreDelayTime);
 
         m_itemScoreText.text = (m_maxItem - m_currentItem).ToString();
+        m_itemScoreText.gameObject.SetActive(true);
+        PlaySESound(m_scoreSe);
+
+        yield return new WaitForSeconds(m_scoreDelayTime);
 
         int lostLife = m_maxLivesMemo - m_currentHits;
-        m_lostLifeText.text = lostLife.ToString() ;
+        m_lostLifeText.text = lostLife.ToString();
+        m_lostLifeText.gameObject.SetActive(true);
+        PlaySESound(m_scoreSe);
+
+        yield return new WaitForSeconds(m_scoreDelayTime);
 
         int totalScore = (m_currentItem * 10) + (m_currentHits * 50);
         m_totalScoreText.text = totalScore.ToString();
+        m_totalScoreText.gameObject.SetActive(true);
+        PlaySESound(m_scoreSe);
+
+        yield return new WaitForSeconds(m_rankDelayTime);
 
         string rank = "C";
         if (lostLife == 0 && m_currentItem >= m_maxItem) rank = "S";
         else if (lostLife == 1) rank = "A";
         else if (lostLife == 2) rank = "B";
-
         m_finalRankText.text = rank.ToString();
+        m_finalRankText.gameObject.SetActive(true);
+        m_button.gameObject.SetActive(true);
+        
+        PlaySESound(m_rankSe);
 
-        UnlockCursur();
+    }
+
+    private void PlaySESound(AudioClip se)
+    {
+        m_audioSource.PlayOneShot(se);
     }
 
     //public void ShowGameOverUI()

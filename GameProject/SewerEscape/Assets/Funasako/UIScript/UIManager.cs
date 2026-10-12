@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using TMPro;
 using Unity.VisualScripting;
+using System.Reflection;
 
 public class UIManager : MonoBehaviour
 {
@@ -17,28 +18,36 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float fadeDuration = 1.0f;     // フェードにかける秒数
 
     // HUD
-    [SerializeField] private GameObject hudPanel;
-    [SerializeField] private TextMeshProUGUI ItemText;
-    [SerializeField] private TextMeshProUGUI lifeText;
-    [SerializeField] private TextMeshProUGUI objectiveText;
+    [SerializeField] private GameObject m_hudPanel;
+    [SerializeField] private TextMeshProUGUI m_ItemText;
+    [SerializeField] private TextMeshProUGUI m_lifeText;
+    [SerializeField] private TextMeshProUGUI m_objectiveText;
 
     // リザルト
-    [SerializeField] private GameObject resultPanel;
-    [SerializeField] private TextMeshProUGUI timeScoreText;
-    [SerializeField] private TextMeshProUGUI itemScoreText;
-    [SerializeField] private TextMeshProUGUI lostLifeText;
-    [SerializeField] private TextMeshProUGUI totalScoreText;
-    [SerializeField] private TextMeshProUGUI finalRankText;
+    [SerializeField] private GameObject m_resultPanel;
+    [SerializeField] private TextMeshProUGUI m_timeScoreText;
+    [SerializeField] private TextMeshProUGUI m_itemScoreText;
+    [SerializeField] private TextMeshProUGUI m_lostLifeText;
+    [SerializeField] private TextMeshProUGUI m_totalScoreText;
+    [SerializeField] private TextMeshProUGUI m_finalRankText;
 
     // ゲームオーバー
-    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameObject m_gameOverPanel;
 
-    private int maxItem = 10;
-    private int currentItem = 0;
-    private int maxLives = 3;
-    private int currentLives = 3;
-    private float passedTime = 0.0f;
-    private bool isGameActive = false;
+    private int m_maxItem = 0;
+    private int m_currentItem = 0;
+    private int m_maxLivesMemo = 3;
+    private int m_currentLives = 3;
+    private int m_currentHits = 0;
+    private float m_passedTime = 0.0f;
+    private bool m_isGameActive = false;
+
+    [SerializeField] private KeyFgmManager m_keymanager;
+    [SerializeField] private PlayerHealth m_playerHealth;
+
+    // リフレクション
+    private FieldInfo m_hitsField;
+    private FieldInfo m_maxHitsField;
 
     // 遷移中の連打防止フラグ
     private bool isTransitioning = false;
@@ -53,16 +62,42 @@ public class UIManager : MonoBehaviour
             fadeCanvasGroup.alpha = 0f;
             fadeCanvasGroup.blocksRaycasts = false;
         }
+        m_isGameActive = true;
+        m_hudPanel.SetActive(true);
+        m_resultPanel.SetActive(false);
+        m_objectiveText.text = "COLLECT ALL ITEMS";
 
-        hudPanel.SetActive(true);
-        resultPanel.SetActive(false);
-        gameOverPanel.SetActive(false);
-        if (objectiveText != null) objectiveText.text = "COLLECT ALL ITEMS";
+        // アイテム数初期値を記録
+        m_maxItem = m_keymanager.GetKeyFgmNum();
+
+        // ↓重い処理らしいので普通にGet関数とか取得できるようにしてもらう
+
+        m_hitsField = typeof(PlayerHealth).GetField("currentHits", BindingFlags.NonPublic | BindingFlags.Instance);
+        m_maxHitsField = typeof(PlayerHealth).GetField("maxHits", BindingFlags.NonPublic | BindingFlags.Instance);
+       
+        if (m_maxHitsField != null)
+        {
+            m_maxLivesMemo = (int)m_maxHitsField.GetValue(m_playerHealth);
+        }
     }
 
-    void Update()
+void Update()
     {
-        if (isGameActive) passedTime += Time.deltaTime;
+        if (!m_isGameActive) return;
+
+        m_passedTime += Time.deltaTime;
+
+        m_currentItem = m_keymanager.GetKeyFgmNum();
+        m_ItemText.text = m_currentItem.ToString();
+
+        if (m_keymanager.IsGameClear())
+        {
+            m_objectiveText.text = "GET BACK TO THE PORTAL";
+        }
+
+        m_currentHits = (int)m_hitsField.GetValue(m_playerHealth);
+        m_currentLives = m_maxLivesMemo - m_currentHits;
+        m_lifeText.text = "LIVES:" + m_currentLives.ToString();
 
         // デバッグ用
         //if (Keyboard.current.digit1Key.wasPressedThisFrame) OnItemCollected();
@@ -71,102 +106,100 @@ public class UIManager : MonoBehaviour
     }
 
     // ゲーム開始時のUI初期化
-    public void SetUpGameUI(int totalItem, int startLives)
-    {
-        maxItem = totalItem;
-        currentItem = 0;
-        maxLives = startLives;
-        currentLives = startLives;
-        passedTime = 0;
-        isGameActive = true;
+    //public void SetUpGameUI(int totalItem, int startLives)
+    //{
+    //    m_maxItem = totalItem;
+    //    m_currentItem = 0;
+    //    m_maxLivesMemo = startLives;
+    //    m_currentHits = startLives;
+    //    m_passedTime = 0;
+    //    m_isGameActive = true;
 
-        hudPanel.SetActive(true);
-        resultPanel.SetActive(false);
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+    //    m_hudPanel.SetActive(true);
+    //    m_resultPanel.SetActive(false);
+    //    if (m_gameOverPanel != null) m_gameOverPanel.SetActive(false);
 
-        UpdateHUD();
-        if (objectiveText != null) objectiveText.text = "COLLECT ALL ITEM";
-    }
+    //    UpdateHUD();
+    //    if (m_objectiveText != null) m_objectiveText.text = "COLLECT ALL ITEM";
+    //}
 
     // HUD更新
-    private void UpdateHUD()
-    {
-        int remaining = maxItem - currentItem;
-        if (ItemText != null) ItemText.text = remaining.ToString();
-        if (lifeText != null) lifeText.text = "LIVES:" + currentLives.ToString();
-    }
+    //private void UpdateHUD()
+    //{
+    //    int remaining = m_maxItem - m_currentItem;
+    //    if (m_ItemText != null) m_ItemText.text = remaining.ToString();
+    //    if (m_lifeText != null) m_lifeText.text = "LIVES:" + m_currentHits.ToString();
+    //}
 
-    public void OnItemCollected()
-    {
-        if (!isGameActive) return;
+    //public void OnItemCollected()
+    //{
+    //    if (!m_isGameActive) return;
 
-        if (currentItem != maxItem)
-        {
-            currentItem++;
+    //    if (m_currentItem != m_maxItem)
+    //    {
+    //        m_currentItem++;
 
-        }
-        if (currentItem >= maxItem)
-        {
-            currentItem = maxItem;
-            if (objectiveText != null) objectiveText.text = "GET BACK TO THE PORTAL";
-        }
-        UpdateHUD();
-    }
+    //    }
+    //    if (m_currentItem >= m_maxItem)
+    //    {
+    //        m_currentItem = m_maxItem;
+    //        if (m_objectiveText != null) m_objectiveText.text = "GET BACK TO THE PORTAL";
+    //    }
+    //    UpdateHUD();
+    //}
 
-    public void OnPlayerDamaged()
-    {
-        Debug.Log("call");
+    //public void OnPlayerDamaged()
+    //{
+    //    Debug.Log("call");
 
-        if (!isGameActive) return;
+    //    if (!m_isGameActive) return;
 
-        currentLives--;
-        UpdateHUD();
-        Debug.Log("damage");
+    //    m_currentHits--;
+    //    UpdateHUD();
+    //    Debug.Log("damage");
 
-        if (currentLives <= 0)
-        {
-            ShowGameOverUI();
-        }
-    }
+    //    if (m_currentHits <= 0)
+    //    {
+    //        ShowGameOverUI();
+    //    }
+    //}
 
     public void ShowResultUI()
     {
-        isGameActive = false;
-        hudPanel.SetActive(false);
-        resultPanel.SetActive(true);
+        m_isGameActive = false;
+        m_hudPanel.SetActive(false);
+        m_resultPanel.SetActive(true);
 
-        int minites = Mathf.FloorToInt(passedTime / 60F);
-        int seconds = Mathf.FloorToInt(passedTime % 60F);
-        if (timeScoreText != null)
-        {
-            timeScoreText.text = string.Format("TIME: { 0:0 } { 1:00 }", minites, seconds);
-        }
+        int minites = Mathf.FloorToInt(m_passedTime / 60F);
+        int seconds = Mathf.FloorToInt(m_passedTime % 60F);
+        m_timeScoreText.text = string.Format("TIME: { 0:0 } { 1:00 }", minites, seconds);
+        
 
-        int livesLost = maxLives - currentLives;
-        if (itemScoreText != null) itemScoreText.text = "SOUL SHARDS: " + currentItem;
-        if (lostLifeText != null) lostLifeText.text = "LIVES LOST: " + livesLost + " (残り残機: " + currentLives + ")";
+        int lostLife = m_maxLivesMemo - m_currentHits;
+        if (m_itemScoreText != null) m_itemScoreText.text = "COLLECT ITEM: " + (m_maxItem - m_currentItem);
+        if (m_lostLifeText != null) m_lostLifeText.text = "LOST LIFE: " + lostLife;
 
-        int totalScore = (currentItem * 10) + (currentLives * 50);
-        if (totalScoreText != null) totalScoreText.text = "TOTAL SCORE: " + totalScore;
+        int totalScore = (m_currentItem * 10) + (m_currentHits * 50);
+        if (m_totalScoreText != null) m_totalScoreText.text = "TOTAL SCORE: " + totalScore;
 
         string rank = "C";
-        if (livesLost == 0 && currentItem >= maxItem) rank = "S";
-        else if (livesLost == 1) rank = "A";
-        else if (livesLost == 2) rank = "B";
+        if (lostLife == 0 && m_currentItem >= m_maxItem) rank = "S";
+        else if (lostLife == 1) rank = "A";
+        else if (lostLife == 2) rank = "B";
 
-        if (finalRankText != null) finalRankText.text = "FINAL RANK: " + rank;
-
-        UnlockCursur();
-    }
-
-    public void ShowGameOverUI()
-    {
-        isGameActive = false;
-        hudPanel.SetActive(false);
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        if (m_finalRankText != null) m_finalRankText.text = "FINAL RANK: " + rank;
 
         UnlockCursur();
     }
+
+    //public void ShowGameOverUI()
+    //{
+    //    m_isGameActive = false;
+    //    m_hudPanel.SetActive(false);
+    //    if (m_gameOverPanel != null) m_gameOverPanel.SetActive(true);
+
+    //    UnlockCursur();
+    //}
 
     public void OnReturnToTitle()
     {

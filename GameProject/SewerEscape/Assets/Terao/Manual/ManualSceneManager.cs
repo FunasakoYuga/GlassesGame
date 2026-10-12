@@ -45,7 +45,7 @@ public class ManualSceneManager : MonoBehaviour
 
         if (fadeCanvasGroup != null)
         {
-            // フェード中は他のボタンを押せないようにクリックを遮断
+            // フェード中は他のボタンを押せないように入力を遮断
             fadeCanvasGroup.blocksRaycasts = true;
 
             float time = 0f;
@@ -53,7 +53,7 @@ public class ManualSceneManager : MonoBehaviour
             {
                 time += Time.deltaTime;
                 fadeCanvasGroup.alpha = Mathf.Clamp01(time / fadeDuration);
-                yield return null; // 1フレーム待機
+                yield return null;
             }
 
             fadeCanvasGroup.alpha = 1f;

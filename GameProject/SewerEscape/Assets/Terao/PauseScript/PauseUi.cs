@@ -85,16 +85,16 @@ public class PauseManager : MonoBehaviour
         // 操作説明の表示状態を初期化
         ResetManualUI();
 
-        // 通常プレイ時のカーソル状態（非表示・中央固定）
+        // ゲームプレイ時は非表示・中央固定
         LockCursor();
     }
 
     void Update()
     {
-        // 遷移中はポーズ切り替え入力を無効化
+        // 遷移中はポーズ入力を無効化
         if (isTransitioning) return;
 
-        // キーボードのEscキー、またはゲームパッドのメニュー（Start/Options）ボタンが押されたとき
+        // キーボードのEscキー、またはゲームパッドのメニュー（Start）ボタンが押されたとき
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton7))
         {
             // 操作説明Canvasが表示されている場合は、ポーズ解除ではなく操作説明を閉じる
@@ -104,7 +104,7 @@ public class PauseManager : MonoBehaviour
                 return;
             }
 
-            // 被弾演出中（リスポーン待機中）または死亡時はポーズを開かせない
+            // 被弾演出中または死亡時はポーズを開かせない
             if (!IsPaused && playerHealth != null && (playerHealth.IsRespawning || playerHealth.IsDead))
             {
                 return;

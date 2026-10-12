@@ -28,7 +28,7 @@ public class TitleSceneManager : MonoBehaviour
             fadeCanvasGroup.blocksRaycasts = false;
         }
 
-        // ManualSceneから戻ってきた際に、BGMが2重に鳴るのを防ぎつつ参照を維持
+        // ManualSceneから戻ってきた際にBGMが2重になるのを阻止
         if (bgmAudioSource != null)
         {
             AudioSource[] sources = FindObjectsByType<AudioSource>(FindObjectsSortMode.None);
@@ -53,14 +53,14 @@ public class TitleSceneManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 操作方法画面へ移動するメソッド（UIボタンのOnClickやイベントから呼び出し）
+    /// 操作方法画面へ移動するメソッド
     /// </summary>
     public void GoToManual()
     {
-        // 既に遷移中の場合は何もしない（連打防止）
+        // 既に遷移中の場合は何もしない
         if (isTransitioning) return;
 
-        // ManualSceneに行くときはBGMを破棄させずに残す
+        // ManualSceneに行くときはBGMを破棄しない
         if (bgmAudioSource != null)
         {
             DontDestroyOnLoad(bgmAudioSource.gameObject);
@@ -85,7 +85,7 @@ public class TitleSceneManager : MonoBehaviour
         // フェードアウト完了まで待機
         yield return StartCoroutine(FadeOut(shouldFadeBgm));
 
-        // ManualScene以外（AllSceneなど）へ行くときはBGMを完全に停止・破棄する
+        // ManualScene以外へ行くときはBGMを完全に停止・破棄する
         if (shouldFadeBgm && bgmAudioSource != null)
         {
             bgmAudioSource.Stop();
@@ -116,7 +116,7 @@ public class TitleSceneManager : MonoBehaviour
 
         if (fadeCanvasGroup != null)
         {
-            // フェード中は他のボタンを押せないように操作を遮断
+            // フェード中は他のボタンを押せないように入力を遮断
             fadeCanvasGroup.blocksRaycasts = true;
 
             float time = 0f;
@@ -138,7 +138,7 @@ public class TitleSceneManager : MonoBehaviour
             fadeCanvasGroup.alpha = 1f;
         }
 
-        // フェードアウト完了時に確実に音量を0にしておく
+        // フェードアウト完了時に音量を0にしておく
         if (fadeBgm && bgmAudioSource != null)
         {
             bgmAudioSource.volume = 0f;

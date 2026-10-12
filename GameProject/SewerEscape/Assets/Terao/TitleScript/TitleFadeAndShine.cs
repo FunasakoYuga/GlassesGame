@@ -32,7 +32,7 @@ public class TitleFadeAndShine : MonoBehaviour
 
     private void Start()
     {
-        // 初期状態を非表示（透明）に設定
+        // 初期状態を非表示に設定
         if (titleCanvasGroup1 != null)
         {
             titleCanvasGroup1.alpha = 0f;
@@ -71,17 +71,17 @@ public class TitleFadeAndShine : MonoBehaviour
     }
 
     /// <summary>
-    /// タイトル1 → タイトル2の順にフェードインし、その後時間差で光らせるコルーチン
+    /// タイトル1 → タイトル2の順にフェードインし、時間差で光らせる
     /// </summary>
     private IEnumerator TitleSequenceRoutine()
     {
         // 開始までのディレイ
         yield return new WaitForSeconds(startDelay);
 
-        // --- 1. タイトル1のフェードイン ---
+        // タイトル1のフェードイン
         if (titleCanvasGroup1 != null)
         {
-            // フェードイン中にもタイトル1を発光させる（並行実行）
+            // フェードイン中にもタイトル1を発光させる
             if (titleGraphic1 != null)
             {
                 StartCoroutine(FlashShineRoutine(titleGraphic1, originalColor1, flashDuration1));
@@ -93,10 +93,10 @@ public class TitleFadeAndShine : MonoBehaviour
         // タイトル1とタイトル2の間の時間差
         yield return new WaitForSeconds(delayBetweenTitles);
 
-        // --- 2. タイトル2のフェードイン ---
+        // タイトル2のフェードイン
         if (titleCanvasGroup2 != null)
         {
-            // フェードイン中にもタイトル2を発光させる（並行実行）
+            // フェードイン中にもタイトル2を発光させる
             if (titleGraphic2 != null)
             {
                 StartCoroutine(FlashShineRoutine(titleGraphic2, originalColor2, flashDuration2));
@@ -105,10 +105,10 @@ public class TitleFadeAndShine : MonoBehaviour
             yield return StartCoroutine(FadeInGroup(titleCanvasGroup2, fadeInDuration2));
         }
 
-        // --- 3. ボタンのフェードインと操作有効化 ---
+        // ボタンのフェードインと操作有効化
         if (buttonCanvasGroup != null)
         {
-            // ボタンをフェードイン（buttonFadeDurationが0より大きい場合）
+            // ボタンをフェードイン
             if (buttonFadeDuration > 0f)
             {
                 yield return StartCoroutine(FadeInGroup(buttonCanvasGroup, buttonFadeDuration));
@@ -125,16 +125,16 @@ public class TitleFadeAndShine : MonoBehaviour
             // コントローラー用に最初のボタンを選択状態にする
             if (firstSelectedButton != null && EventSystem.current != null)
             {
-                yield return null; // 1フレーム待機して確実にフォーカス
+                yield return null; 
                 EventSystem.current.SetSelectedGameObject(null);
                 EventSystem.current.SetSelectedGameObject(firstSelectedButton);
             }
         }
 
-        // --- 4. 一定時間ごとにタイトル1 → タイトル2の順に一瞬光るループ ---
+        // 一定時間ごとにタイトル1 → タイトル2の順に一瞬光るループ
         while (true)
         {
-            // 次に光るまでの待機
+           
             yield return new WaitForSeconds(shineInterval);
 
             // タイトル1が一瞬光る

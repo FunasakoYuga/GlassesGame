@@ -17,25 +17,38 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float MouselookSpeed = 1.0f; // マウスでの視点感度
     [SerializeField] private float UpMaxPitch = -90.0f;
     [SerializeField] private float DownMaxPitch = 90.0f;
+    [SerializeField] private float forwardOffsetZ = 0.25f;    // 前を向いている時のカメラ前後位置（顔より少し前）
+    [SerializeField] private float lookBackOffsetZ = -0.25f;  // 後ろを向いた時のカメラ前後位置（背中より少し後ろへ逃がす）
+
+    [Header("ダッシュ時カメラ揺れ設定")]
+    [SerializeField] private float dashBobFrequency = 14.0f; // 揺れの速さ（歩調のピッチ）
+    [SerializeField] private float dashBobAmountX = 0.04f;    // 横方向の揺れ幅
+    [SerializeField] private float dashBobAmountY = 0.06f;    // 縦方向の揺れ幅
+    [SerializeField] private float bobReturnSpeed = 8.0f;     // ダッシュ停止時に元の位置へ戻る速度
 
     [Header("サウンド設定")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip[] walkClips;         // 歩行用SE
-    [SerializeField] private AudioClip[] runClips;          // ダッシュ用SE
-    [SerializeField] private AudioClip[] jumpClips;         // ジャンプSE
+    [SerializeField] private AudioClip[] walkClips;          // 歩行用SE
+    [SerializeField] private AudioClip[] runClips;           // ダッシュ用SE
+    [SerializeField] private AudioClip[] jumpClips;          // ジャンプSE
     [SerializeField] private float walkStepInterval = 0.5f; // 歩行時の足音間隔（秒）
     [SerializeField] private float dashStepInterval = 0.3f; // ダッシュ時の足音間隔（秒）
     [SerializeField] private float footstepVolume = 0.6f;   // 音量
     [Range(0f, 1f)]
-    [SerializeField] private float walkVolume = 0.5f;       // 歩行時の足音音量
+    [SerializeField] private float walkVolume = 0.5f;        // 歩行時の足音音量
     [Range(0f, 1f)]
-    [SerializeField] private float runVolume = 0.7f;        // ダッシュ時の足音音量
+    [SerializeField] private float runVolume = 0.7f;         // ダッシュ時の足音音量
     [Range(0f, 1f)]
-    [SerializeField] private float jumpVolume = 0.8f;       // ジャンプ着地時の音量
+    [SerializeField] private float jumpVolume = 0.8f;        // ジャンプ着地時の音量
 
     private CharacterController characterController;
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
+
+    // カメラ揺れ（ヘッドボブ）および基準位置管理用
+    private Vector3 defaultCameraLocalPos;
+    private float bobTimer = 0f;
+    private bool lastLookingBack = false; // 振り向き切り替わり検知用
 
     // 足音タイマーおよび接地判定追跡用
     private float stepTimer = 0f;
@@ -69,6 +82,11 @@ public class PlayerMove : MonoBehaviour
         if (cameraTransform == null && Camera.main != null)
         {
             cameraTransform = Camera.main.transform;
+        }
+
+        if (cameraTransform != null)
+        {
+            defaultCameraLocalPos = cameraTransform.localPosition;
         }
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -205,6 +223,47 @@ public class PlayerMove : MonoBehaviour
 
         // 再生中アニメーション状態に応じた足音制御
         HandleFootstepSound(moveInput);
+
+        // ダッシュ時のカメラ揺れおよび振り返り時オフセット制御
+        HandleCameraBob(moveInput, isDashPressed, isLookingBack);
+    }
+
+    /// <summary>
+    /// ダッシュ時のカメラの揺れ（ヘッドボブ）と振り返り時のカメラ位置オフセットを制御する
+    /// </summary>
+    private void HandleCameraBob(Vector2 moveInput, bool isDash, bool isLookingBack)
+    {
+        if (cameraTransform == null) return;
+
+        // 振り向き状態に応じて前後のオフセットを決定（背中に埋まるのを防ぐ）
+        float targetZ = isLookingBack ? lookBackOffsetZ : forwardOffsetZ;
+        Vector3 basePos = new Vector3(defaultCameraLocalPos.x, defaultCameraLocalPos.y, targetZ);
+
+        // 振り向きの切り替わり瞬間は即座に位置を切り替え、顔のポリゴン突き抜けを防ぐ
+        if (isLookingBack != lastLookingBack)
+        {
+            cameraTransform.localPosition = basePos;
+            lastLookingBack = isLookingBack;
+        }
+
+        // 地面に足が着いていて、移動入力があり、ダッシュしている時のみ揺らす
+        bool isDashingOnGround = characterController.isGrounded && moveInput.sqrMagnitude > 0.01f && isDash;
+
+        if (isDashingOnGround)
+        {
+            bobTimer += Time.deltaTime * dashBobFrequency;
+
+            float bobX = Mathf.Cos(bobTimer * 0.5f) * dashBobAmountX;
+            float bobY = Mathf.Sin(bobTimer) * dashBobAmountY;
+
+            Vector3 targetLocalPos = basePos + new Vector3(bobX, bobY, 0f);
+            cameraTransform.localPosition = Vector3.Lerp(cameraTransform.localPosition, targetLocalPos, Time.deltaTime * dashBobFrequency);
+        }
+        else
+        {
+            bobTimer = 0f;
+            cameraTransform.localPosition = Vector3.Lerp(cameraTransform.localPosition, basePos, Time.deltaTime * bobReturnSpeed);
+        }
     }
 
     /// <summary>
@@ -339,6 +398,7 @@ public class PlayerMove : MonoBehaviour
         if (cameraTransform != null)
         {
             cameraTransform.localRotation = Quaternion.identity;
+            cameraTransform.localPosition = defaultCameraLocalPos;
         }
     }
 

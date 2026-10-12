@@ -432,6 +432,10 @@ MonoBehaviour:
   MouselookSpeed: 1
   UpMaxPitch: -90
   DownMaxPitch: 40
+  dashBobFrequency: 14
+  dashBobAmountX: 0.04
+  dashBobAmountY: 0.06
+  bobReturnSpeed: 8
   audioSource: {fileID: 229116040225386652}
   walkClips:
   - {fileID: 8300000, guid: 219237c330d0c244e98a3bce3d083203, type: 3}
@@ -442,6 +446,9 @@ MonoBehaviour:
   walkStepInterval: 0.5
   dashStepInterval: 0.3
   footstepVolume: 0.6
+  walkVolume: 0.5
+  runVolume: 0.7
+  jumpVolume: 0.8
 --- !u!114 &4374232371068724811
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -454,7 +461,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 961e3c5155ae35c44ba64d99c756c4d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
-  maxHp: 3
+  maxHits: 3
   fadeCanvasGroup: {fileID: 0}
   lookWaitTime: 1
   fadeDuration: 1.5

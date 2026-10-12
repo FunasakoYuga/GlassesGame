@@ -1,4 +1,4 @@
-using System.Collections; // 実時間での破棄コルーチン用に追加
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,12 +37,12 @@ public class ButtonManager : MonoBehaviour
                 if (currentSceneName == "ManualScene" || currentSceneName == "AllScene")
                 {
                     string btnName = btn.gameObject.name.ToLower();
+                    // pad、keymou、backが含まれるボタンはクリック音をならさない
                     if (btnName.Contains("pad") || btnName.Contains("keymou")|| btnName.Contains("back"))
                     {
                         continue;
                     }
                 }
-
                 btn.onClick.AddListener(PlayClickSound);
             }
         }
@@ -52,7 +52,7 @@ public class ButtonManager : MonoBehaviour
     {
         if (EventSystem.current == null) return;
 
-        // マウス操作時：カーソルが乗ったボタンを選択状態にする
+        // マウス操作時はカーソルが乗ったボタンを選択状態にする
         HandleMouseHover();
 
         // 現在選択中のUIがあれば記憶を更新
@@ -82,13 +82,13 @@ public class ButtonManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ボタン決定音を再生する（シーン遷移しても途切れないようDontDestroyOnLoadで再生）
+    /// ボタン決定音を再生する(DontDestroy)
     /// </summary>
     public void PlayClickSound()
     {
         if (clickSound == null) return;
 
-        // シーン遷移しても音が消えない専用の一時オブジェクトを生成
+        // シーン遷移しても音が消えない一時オブジェクトを生成
         GameObject soundObj = new GameObject("ButtonSE_DontDestroy");
         DontDestroyOnLoad(soundObj);
 
@@ -96,14 +96,14 @@ public class ButtonManager : MonoBehaviour
         audioSource.clip = clickSound;
         audioSource.playOnAwake = false;
         audioSource.volume = 1.0f;
-        audioSource.ignoreListenerPause = true; // ポーズ中（AudioListener.pause = true）でも音を鳴らす設定
+        audioSource.ignoreListenerPause = true; // ポーズ中でもSEを鳴らす設定
         audioSource.Play();
 
-        // ポーズ中（Time.timeScale = 0）でも実時間で確実に破棄する
+        // ポーズ中でも一時オブジェクト破棄する
         StartCoroutine(DestroyAfterPlayRealtime(soundObj, clickSound.length));
     }
 
-    // ポーズ中（時間停止中）でも実時間でオブジェクトを破棄するコルーチン
+    // ポーズ中でも一時オブジェクトを破棄する
     private IEnumerator DestroyAfterPlayRealtime(GameObject target, float delay)
     {
         yield return new WaitForSecondsRealtime(delay);
@@ -116,7 +116,7 @@ public class ButtonManager : MonoBehaviour
     // マウスカーソルが乗ったボタンを自動で選択状態にする処理
     private void HandleMouseHover()
     {
-        // マウスが動いていない（パッド操作中など）は処理をスキップ
+        // マウスが動いていないときは処理をスキップ
         if (Input.mousePosition == lastMousePosition) return;
         lastMousePosition = Input.mousePosition;
 

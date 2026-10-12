@@ -13,7 +13,7 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private float lookWaitTime = 2.0f;             // 視点を向けてから暗転するまでの待機時間（秒）
     [Range(1.0f, 4.0f)]
     [SerializeField] private float fadeDuration = 1.5f;             // フェードイン / フェードアウト
-    [SerializeField] private float fadeInDuration = 3.0f;           // リスポーン時のゆっくりフェードインする時間（秒）
+    [SerializeField] private float fadeInDuration = 3.0f;           // リスポーン時フェードイン時間（秒）
     [SerializeField] private float blackScreenWaitTime = 0.3f;      // フェードの停止時間（秒）
 
     [Header("ゲームオーバーUI設定")]
@@ -25,11 +25,11 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private PlayerMove playerMove;
 
     [Header("アニメーション・オーディオ設定")]
-    [SerializeField] private Animator playerAnimator;               // 停止させるアニメーター（未設定なら自動取得）
-    [SerializeField] private AudioSource GameOveraudioSource;               // ゲームオーバーオーディオ
+    [SerializeField] private Animator playerAnimator;               // 停止させるアニメーター
+    [SerializeField] private AudioSource GameOveraudioSource;               // ゲームオーバーサウンド
 
-    [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ（未設定なら自動取得）
-    [SerializeField] private AudioClip[] dieClips;         // 死亡SE（複数登録でランダム再生）
+    [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ
+    [SerializeField] private AudioClip[] dieClips;         // 死亡SE
     [SerializeField] private AudioClip gameOverClip;       // 3回死亡時（ゲームオーバー時）のSE
 
     private int currentHits = 0;
@@ -92,15 +92,17 @@ public class PlayerHealth : MonoBehaviour
 
     private void CheckHit(GameObject target)
     {
+        // リスポーンか死亡か
         if (isDead || isRespawning) return;
 
+        // Enemyタグを持つオブジェクトに接触したら被弾or死亡
         if (target.CompareTag("Enemy") || target.transform.root.CompareTag("Enemy"))
         {
             HandleHit(target);
         }
     }
 
-    // 被弾処理（当たった相手のオブジェクトを受け取る）
+    // 被弾処理
     private void HandleHit(GameObject target)
     {
         currentHits++;
@@ -139,7 +141,7 @@ public class PlayerHealth : MonoBehaviour
         // 視点を敵に向けてから2秒待機
         yield return new WaitForSeconds(lookWaitTime);
 
-        // 2. 徐々に暗転
+        // 徐々に暗転
         if (fadeCanvasGroup != null)
         {
             fadeCanvasGroup.blocksRaycasts = true;
@@ -169,14 +171,14 @@ public class PlayerHealth : MonoBehaviour
             characterController.enabled = true;
         }
 
-        // 5. 徐々にフェードアウト
+        // 徐々にフェードアウト
         if (fadeCanvasGroup != null)
         {
             yield return StartCoroutine(Fade(1f, 0f, fadeInDuration));
             fadeCanvasGroup.blocksRaycasts = false;
         }
 
-        // 6. 操作を再開
+        // 入力再開
         SetPlayerInput(true);
 
         // リスポーン完了後にアニメーションを再開
@@ -236,14 +238,14 @@ public class PlayerHealth : MonoBehaviour
             fadeCanvasGroup.alpha = 1f;
         }
 
-        // フェードアウト後にマウスの操作を解放してカーソルを表示する
+        // フェードアウト後にマウスの入力を解放してカーソルを表示する
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            // 3回死亡（ゲームオーバー画面表示）時のSEを再生
+            // ゲームオーバー時SEを再生
             PlayGameOverSound();
 
             // コントローラー用にゲームオーバーボタンを選択
@@ -265,8 +267,7 @@ public class PlayerHealth : MonoBehaviour
             col.enabled = false;
         }
 
-        // 3. プレイヤーの見た目（3Dモデル）のみを非表示にする
-        // （カメラやCanvasを消さないよう、RendererのみをOFFにする）
+        // プレイヤーの見た目のみを非表示にする
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
         foreach (Renderer r in renderers)
         {
@@ -276,10 +277,10 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("ゲームオーバー：画面を暗転させたまま停止しました");
     }
 
-    // パネル表示後に確実にボタンを選択状態にするための待機コルーチン
+    // パネル表示後に確実にボタンを選択状態にする
     private IEnumerator SetSelectedGameOverButton(GameObject target)
     {
-        yield return null; // 1フレーム待機
+        yield return null;
         if (EventSystem.current != null)
         {
             EventSystem.current.SetSelectedGameObject(null);
@@ -288,7 +289,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// Audioとアニメーションを停止する
+    /// アニメーションとサウンドを停止する
     /// </summary>
     private void StopAudioAndAnimation()
     {
@@ -320,7 +321,7 @@ public class PlayerHealth : MonoBehaviour
         AudioClip clip = dieClips[Random.Range(0, dieClips.Length)];
         if (clip == null) return;
 
-        // プレイヤーのAudioSourceを使って再生（足音停止後なので確実に鳴る）
+        // プレイヤーのAudioSourceを使って再生
         if (playerAudioSources != null && playerAudioSources.Length > 0 && playerAudioSources[0] != null)
         {
             playerAudioSources[0].volume = 1.0f;
@@ -328,7 +329,7 @@ public class PlayerHealth : MonoBehaviour
         }
         else
         {
-            // AudioSourceが取得できていない場合のフォールバック（プレイヤー位置で再生）
+            // AudioSourceが取得できていない場合の処理
             Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
             AudioSource.PlayClipAtPoint(clip, playPos, 1.0f);
         }

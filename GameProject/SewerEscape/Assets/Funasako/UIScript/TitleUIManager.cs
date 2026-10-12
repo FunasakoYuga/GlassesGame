@@ -19,7 +19,7 @@ public class TitleUIManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // 開始時はフェード画面を透明にしてクリックを通すように設定
+        // 開始時はフェード画面を透明にして入力を許可する設定
         if (fadeCanvasGroup != null)
         {
             fadeCanvasGroup.alpha = 0f;
@@ -69,7 +69,7 @@ public class TitleUIManager : MonoBehaviour
 
         if (fadeCanvasGroup != null)
         {
-            // フェード中は他のボタンを押せないように操作を遮断
+            // フェード中は他のボタンを押せないように入力を遮断
             fadeCanvasGroup.blocksRaycasts = true;
 
             float time = 0f;

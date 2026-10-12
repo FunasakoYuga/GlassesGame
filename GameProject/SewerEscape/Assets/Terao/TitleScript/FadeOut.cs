@@ -9,7 +9,6 @@ public class FadeOut : MonoBehaviour
     [Header("フェードにかける時間（秒）")]
     [SerializeField] private float fadeDuration = 1.0f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         // シーン開始時に自動でフェードを開始
@@ -19,16 +18,10 @@ public class FadeOut : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    //void Update()
-    //{
-
-    //}
-
-    // 黒画面から徐々にゲーム画面を明るくする処理（フェードイン）
+    // フェードイン
     private IEnumerator FadeIn()
     {
-        // 開始時は真っ黒にして操作を遮断
+        // 開始時は真っ黒にして入力を遮断
         fadeCanvasGroup.alpha = 1f;
         fadeCanvasGroup.blocksRaycasts = true;
 
@@ -40,7 +33,7 @@ public class FadeOut : MonoBehaviour
             yield return null;
         }
 
-        // 完全に透明にしてクリック等の操作を許可
+        // 完全に透明にして入力を許可
         fadeCanvasGroup.alpha = 0f;
         fadeCanvasGroup.blocksRaycasts = false;
     }

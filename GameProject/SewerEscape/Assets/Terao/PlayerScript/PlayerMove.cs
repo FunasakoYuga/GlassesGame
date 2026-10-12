@@ -21,7 +21,7 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float lookBackOffsetZ = -0.25f;  // 後ろを向いた時のカメラ前後位置（背中より少し後ろへ逃がす）
 
     [Header("ダッシュ時カメラ揺れ設定")]
-    [SerializeField] private float dashBobFrequency = 14.0f; // 揺れの速さ（歩調のピッチ）
+    [SerializeField] private float dashBobFrequency = 14.0f; // 揺れの速さ
     [SerializeField] private float dashBobAmountX = 0.04f;    // 横方向の揺れ幅
     [SerializeField] private float dashBobAmountY = 0.06f;    // 縦方向の揺れ幅
     [SerializeField] private float bobReturnSpeed = 8.0f;     // ダッシュ停止時に元の位置へ戻る速度
@@ -45,16 +45,16 @@ public class PlayerMove : MonoBehaviour
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
 
-    // カメラ揺れ（ヘッドボブ）および基準位置管理用
+    // カメラ揺れ基準位置管理用
     private Vector3 defaultCameraLocalPos;
     private float bobTimer = 0f;
-    private bool lastLookingBack = false; // 振り向き切り替わり検知用
+    private bool lastLookingBack = false; // 振り向き検知用
 
     // 足音タイマーおよび接地判定追跡用
     private float stepTimer = 0f;
     private bool wasGrounded = true;
 
-    // 被弾時等の強制旋回制御用
+    // 被弾時等の視点旋回制御用
     private Coroutine lookCoroutine;
     private bool isRotatingToTarget = false;
 
@@ -159,7 +159,7 @@ public class PlayerMove : MonoBehaviour
             if (Mouse.current.leftButton.isPressed) isLookingBack = true;
         }
 
-        // 視点操作
+        // 敵被弾時視点
         if (!isRotatingToTarget)
         {
             if (Mathf.Abs(yaw) > 0.0001f)
@@ -187,7 +187,7 @@ public class PlayerMove : MonoBehaviour
 
         Vector3 finalVelocity = move * currentSpeed;
 
-        // 接地しているときは即座にジャンプ可能
+        // 接地しているときはジャンプ可能
         if (characterController.isGrounded)
         {
             // 空中から着地した瞬間に再生
@@ -218,7 +218,7 @@ public class PlayerMove : MonoBehaviour
             characterController.Move(finalVelocity * Time.deltaTime);
         }
 
-        // アニメーションをスクリプトから制御
+        // アニメーションをスクリプト制御
         UpdateAnimation(moveInput, isDashPressed);
 
         // 再生中アニメーション状態に応じた足音制御
@@ -229,17 +229,17 @@ public class PlayerMove : MonoBehaviour
     }
 
     /// <summary>
-    /// ダッシュ時のカメラの揺れ（ヘッドボブ）と振り返り時のカメラ位置オフセットを制御する
+    /// ダッシュ時のカメラの揺れと振り返り時のカメラ位置オフセット制御
     /// </summary>
     private void HandleCameraBob(Vector2 moveInput, bool isDash, bool isLookingBack)
     {
         if (cameraTransform == null) return;
 
-        // 振り向き状態に応じて前後のオフセットを決定（背中に埋まるのを防ぐ）
+        // 振り向き状態に応じて前後のオフセットを決定
         float targetZ = isLookingBack ? lookBackOffsetZ : forwardOffsetZ;
         Vector3 basePos = new Vector3(defaultCameraLocalPos.x, defaultCameraLocalPos.y, targetZ);
 
-        // 振り向きの切り替わり瞬間は即座に位置を切り替え、顔のポリゴン突き抜けを防ぐ
+        // 振り向きの切り替わり瞬間は即座に位置を切り替え
         if (isLookingBack != lastLookingBack)
         {
             cameraTransform.localPosition = basePos;
@@ -282,7 +282,7 @@ public class PlayerMove : MonoBehaviour
             return;
         }
 
-        // 後退系・前進系それぞれのアニメーションに応じた間隔の設定
+        // それぞれのアニメーションに応じた間隔の設定
         bool isRunningState = (currentAnimationState == STATE_RUN || currentAnimationState == STATE_RUNBACK);
         float currentInterval = isRunningState ? dashStepInterval : walkStepInterval;
 
@@ -297,7 +297,7 @@ public class PlayerMove : MonoBehaviour
     /// <summary>
     /// 各アニメーションステート専用のサウンド素材を選択して再生する
     /// </summary>
-    /// <param name="stateName">アニメーションステート名（省略時は現在のステート）</param>
+    /// <param name="stateName">アニメーションステート名</param>
     public void PlayFootstepByState(string stateName = "")
     {
         if (audioSource == null) return;
@@ -344,7 +344,7 @@ public class PlayerMove : MonoBehaviour
         AudioClip clip = jumpClips[Random.Range(0, jumpClips.Length)];
         if (clip != null)
         {
-            // 足音の停止処理に消されないよう、独立してSEを再生
+            // 足音の停止処理に消されないようSEを再生
             AudioSource.PlayClipAtPoint(clip, transform.position, jumpVolume);
         }
     }
@@ -358,7 +358,7 @@ public class PlayerMove : MonoBehaviour
 
         string targetState;
 
-        // 地面についていない（空中・ジャンプ中）場合
+        // 地面についていない場合
         if (!characterController.isGrounded)
         {
             targetState = STATE_JUMP;
@@ -368,7 +368,7 @@ public class PlayerMove : MonoBehaviour
             // 入力状態に応じてアニメーションの変化
             if (moveInput.sqrMagnitude > 0.01f)
             {
-                // 後ろ入力（Sキーまたはスティック手前倒し）の判定
+                // 後ろ入力の判定
                 if (moveInput.y < -0.1f)
                 {
                     targetState = isDash ? STATE_RUNBACK : STATE_WALKBACK;
@@ -453,7 +453,7 @@ public class PlayerMove : MonoBehaviour
         // 敵に近いほうの角度で視点を向ける
         float deltaYaw = Mathf.DeltaAngle(startYaw, targetYaw);
 
-        // 目標の上下ピッチ角を算出
+        // 上下ピッチ角
         float startPitch = cameraPitch;
         float targetPitch = startPitch;
         if (cameraTransform != null)
@@ -471,7 +471,7 @@ public class PlayerMove : MonoBehaviour
             float t = Mathf.Clamp01(elapsedTime / duration);
             float smoothT = Mathf.SmoothStep(0f, 1f, t);
 
-            // プレイヤー本体の水平回転（右回り）
+            // プレイヤー本体の水平回転
             float currentYaw = startYaw + deltaYaw * smoothT;
             transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 

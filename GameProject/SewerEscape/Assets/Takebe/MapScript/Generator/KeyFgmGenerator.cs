@@ -5,7 +5,7 @@ public class KeyFgmGenerator : MonoBehaviour
 {
     [SerializeField] GameObject keyFgmPre;  // プレハブをインスペクタで設定
     [SerializeField] Transform[] roads;  // 道の親オブジェクト
-    [SerializeField] const int totalKeyFgmNum = 209; // マップ全体に配置する数
+    [SerializeField] int totalKeyFgmNum = 209; // マップ全体に配置する数
     [SerializeField] float height = 0.6f;   // 道の上に浮かせる高さ
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created

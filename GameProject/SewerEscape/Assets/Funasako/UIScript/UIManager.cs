@@ -1,4 +1,4 @@
-using System.Collections; // コルーチン用に追加
+﻿using System.Collections; // コルーチン用に追加
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using System.Reflection;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using UnityEngine.WSA;
 
 
 
@@ -303,7 +304,7 @@ void Update()
     // デバッグ用
     private void UnlockCursur()
     {
-        //Cursor.lockState = CursorLockMode.None;
-        //Cursor.visible = true;
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible = true;
     }
 }

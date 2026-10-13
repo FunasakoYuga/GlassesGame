@@ -2848,15 +2848,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4011077083501845521, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -95.761856
+      value: -95.75
       objectReference: {fileID: 0}
     - target: {fileID: 4011077083501845521, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.14828932
+      value: 0.14
       objectReference: {fileID: 0}
     - target: {fileID: 4011077083501845521, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 116.95958
+      value: 117.01
       objectReference: {fileID: 0}
     - target: {fileID: 4011077083501845521, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2889,6 +2889,10 @@ PrefabInstance:
     - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_Name
       value: Torch Holder (21)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3521,6 +3525,10 @@ PrefabInstance:
     - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_Name
       value: Torch Holder (14)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5289,6 +5297,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Torch Holder (18)
       objectReference: {fileID: 0}
+    - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6433,6 +6445,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Torch Holder (19)
       objectReference: {fileID: 0}
+    - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7098,6 +7114,10 @@ PrefabInstance:
     - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
       propertyPath: m_Name
       value: Torch Holder (20)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4387040363242981035, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

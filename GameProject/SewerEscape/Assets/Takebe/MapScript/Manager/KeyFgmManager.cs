@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public class KeyFgmManager : MonoBehaviour
 {
-
+    [SerializeField] int totalKeyFgmNum = 209; // マップ全体に配置する数
     int keyFgmCount;
     bool isGameClear;
     //[SerializeField] GameObject keyFgm;
@@ -16,7 +16,7 @@ public class KeyFgmManager : MonoBehaviour
     void Start()
     {
         isGameClear = false;
-        keyFgmCount = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
+        keyFgmCount = totalKeyFgmNum;
     }
 
     // Update is called once per frame
@@ -26,10 +26,11 @@ public class KeyFgmManager : MonoBehaviour
         {
             isGameClear = true;
         }
+        // シーン内の指定オブジェクトの数を取得
         keyFgmCount = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
 
-        Debug.Log("keyFgmNum" + keyFgmCount);
-        Debug.Log("isGameEnd" + isGameClear);
+    //    Debug.Log("keyFgmNum" + keyFgmCount);
+    //    Debug.Log("isGameEnd" + isGameClear);
     }
 
     /// <summary>
@@ -44,4 +45,10 @@ public class KeyFgmManager : MonoBehaviour
     /// </summary>
     /// <returns></returns>
     public int GetKeyFgmNum() {  return keyFgmCount; }
+
+    /// <summary>
+    /// キーアイテムの全体の数を取得
+    /// </summary>
+    /// <returns>キーアイテムの全体の数</returns>
+    public int GetTotalKeyFgmNum() { return totalKeyFgmNum; }
 }

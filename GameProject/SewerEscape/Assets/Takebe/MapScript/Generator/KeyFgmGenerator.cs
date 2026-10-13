@@ -5,12 +5,17 @@ public class KeyFgmGenerator : MonoBehaviour
 {
     [SerializeField] GameObject keyFgmPre;  // プレハブをインスペクタで設定
     [SerializeField] Transform[] roads;  // 道の親オブジェクト
-    [SerializeField] int totalKeyFgmNum = 209; // マップ全体に配置する数
-    [SerializeField] float height = 0.6f;   // 道の上に浮かせる高さ
     
+    [SerializeField] float height = 0.6f;   // 道の上に浮かせる高さ
+    KeyFgmManager keyManager;
+    int totalKeyFgmNum; // マップ全体に配置する数
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        keyManager = GameObject.Find("KeyFgmManager").GetComponent<KeyFgmManager>();
+        totalKeyFgmNum = keyManager.GetTotalKeyFgmNum();
+        Debug.Log("TotalKeyFgmNum :" + totalKeyFgmNum);
         PlaceAll(); // ゲーム開始時に全部置く
     }
 

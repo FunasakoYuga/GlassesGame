@@ -53,6 +53,7 @@ public class PlayerMove : MonoBehaviour
     // 足音タイマーおよび接地判定追跡用
     private float stepTimer = 0f;
     private bool wasGrounded = true;
+    private float landingSoundTimer = 0.3f; // ゲーム開始直後の着地音誤再生防止用タイマー
 
     // 被弾時等の視点旋回制御用
     private Coroutine lookCoroutine;
@@ -95,6 +96,12 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
+        // 開始直後の着地音ガードタイマーを減算
+        if (landingSoundTimer > 0f)
+        {
+            landingSoundTimer -= Time.deltaTime;
+        }
+
         Vector2 moveInput = Vector2.zero;
         float yaw = 0f;
         float pitch = 0f;
@@ -190,8 +197,8 @@ public class PlayerMove : MonoBehaviour
         // 接地しているときはジャンプ可能
         if (characterController.isGrounded)
         {
-            // 空中から着地した瞬間に再生
-            if (!wasGrounded)
+            // 空中から着地した瞬間に再生（開始直後タイマー経過かつ一定以上の落下速度があった場合のみ鳴らす）
+            if (!wasGrounded && landingSoundTimer <= 0f && verticalVelocity.y < -2.5f)
             {
                 PlayJumpSound();
             }
@@ -271,20 +278,21 @@ public class PlayerMove : MonoBehaviour
     /// </summary>
     private void HandleFootstepSound(Vector2 moveInput)
     {
+        // それぞれのアニメーションに応じた間隔の設定
+        bool isRunningState = (currentAnimationState == STATE_RUN || currentAnimationState == STATE_RUNBACK);
+        float currentInterval = isRunningState ? dashStepInterval : walkStepInterval;
+
         // 空中にいる、または移動入力がない・アイドル時はタイマーリセット
         if (!characterController.isGrounded || moveInput.sqrMagnitude <= 0.01f || currentAnimationState == STATE_IDLE || currentAnimationState == STATE_JUMP)
         {
-            stepTimer = 0f;
+            // 次に動き出した瞬間にすぐ1歩目が鳴るよう、インターバル時間で初期化
+            stepTimer = currentInterval;
             if (audioSource != null && audioSource.isPlaying)
             {
                 audioSource.Stop();
             }
             return;
         }
-
-        // それぞれのアニメーションに応じた間隔の設定
-        bool isRunningState = (currentAnimationState == STATE_RUN || currentAnimationState == STATE_RUNBACK);
-        float currentInterval = isRunningState ? dashStepInterval : walkStepInterval;
 
         stepTimer += Time.deltaTime;
         if (stepTimer >= currentInterval)

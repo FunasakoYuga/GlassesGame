@@ -21,9 +21,9 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private string playerTag = "Player";
 
     [Header("ランダムパトロール（Wander）設定")]
-    [SerializeField] private float wanderRadius = 8f;         // 1回移動で探すランダム位置の半径
-    [SerializeField] private float minWaitTime = 1f;          // 到着後の最小立ち止まり時間（秒）
-    [SerializeField] private float maxWaitTime = 4f;          // 到着後の最大立ち止まり時間（秒）
+    [SerializeField] private float wanderRadius = 8f;          // 1回移動で探すランダム位置の半径
+    [SerializeField] private float minWaitTime = 1f;           // 到着後の最小立ち止まり時間（秒）
+    [SerializeField] private float maxWaitTime = 4f;           // 到着後の最大立ち止まり時間（秒）
 
     [Header("索敵設定")]
     [SerializeField] private float closeDetectionRange = 3f; // 至近距離（背後でも無条件で気づく距離）
@@ -40,6 +40,10 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private string attackTriggerName = "Attack";
     [SerializeField] private float attackCooldown = 1.5f;
 
+    [Header("サウンド設定")]
+    [SerializeField] private AudioSource audioSource;       // 音を鳴らすAudioSource
+    [SerializeField] private AudioClip noticeSound;         // 敵に見つかった時のSE
+
     [Header("出現条件設定（追加の敵用）")]
     [SerializeField] private bool useSpawnCondition = false;      // 条件付きで出現させる場合はチェックを入れる
     [SerializeField] private int requiredCollectedCount = 50;     // 出現に必要なアイテム取得数
@@ -49,8 +53,8 @@ public class EnemyChase : MonoBehaviour
     private Collider enemyCollider;
 
     [Header("被弾時（ロビー送還時）のテレポート設定")]
-    [SerializeField] private bool teleportOnHit = true;            // プレイヤーにヒットした時にテレポートするか
-    [SerializeField] private float teleportDelay = 2.5f;          // 被弾からテレポートするまでの遅延時間（秒）
+    [SerializeField] private bool teleportOnHit = true;             // プレイヤーにヒットした時にテレポートするか
+    [SerializeField] private float teleportDelay = 2.5f;            // 被弾からテレポートするまでの遅延時間（秒）
     [SerializeField] private bool useStartPosAsLobby = true;      // チェックを入れるとStart時の位置に戻る
     [SerializeField] private Vector3 customLobbyTeleportPos;      // 上のチェックを外した場合のテレポート先座標
     private Vector3 startPosition;                                // 初期位置の保持用
@@ -67,6 +71,12 @@ public class EnemyChase : MonoBehaviour
         enemyCollider = GetComponent<Collider>();
         renderers = GetComponentsInChildren<Renderer>();
         keyManager = FindObjectOfType<KeyFgmManager>();
+
+        // AudioSourceが未設定なら自動取得を試みる
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
 
         // 初期位置を記録
         startPosition = transform.position;
@@ -161,7 +171,6 @@ public class EnemyChase : MonoBehaviour
             return;
         }
 
-        // ▼ 追加：NavMesh上に正しく乗っている時のみ remainingDistance を判定する
         if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
@@ -201,7 +210,6 @@ public class EnemyChase : MonoBehaviour
             return;
         }
 
-        // ▼ 追加：NavMesh上に正しく乗っている時のみ remainingDistance を判定する
         if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
@@ -234,6 +242,15 @@ public class EnemyChase : MonoBehaviour
 
     private void SetState(EnemyState newState)
     {
+        // ▼ 状態が「Chasing（追跡）」に新しく切り替わった瞬間のみSEを再生する
+        if (newState == EnemyState.Chasing && currentState != EnemyState.Chasing)
+        {
+            if (audioSource != null && noticeSound != null)
+            {
+                audioSource.PlayOneShot(noticeSound);
+            }
+        }
+
         currentState = newState;
         waitTimer = 0f;
 
@@ -302,18 +319,16 @@ public class EnemyChase : MonoBehaviour
         animator.SetBool("IsMoving", false);
         animator.SetTrigger(attackTriggerName);
 
-        // プレイヤーの方を向く（演出を合わせるため）
         if (playerTransform != null)
         {
             Vector3 direction = (playerTransform.position - transform.position);
-            direction.y = 0; // 高低差を無視して水平方向のみ向く
+            direction.y = 0;
             if (direction != Vector3.zero)
             {
                 transform.rotation = Quaternion.LookRotation(direction);
             }
         }
 
-        // プレイヤーのフェード演出に合わせて、指定時間（デフォルト2.5秒）遅れてテレポートする
         if (teleportOnHit)
         {
             Invoke(nameof(DelayedTeleport), teleportDelay);

@@ -10,8 +10,6 @@ using UnityEngine.UIElements;
 // ビルドしたときバグ発見
 // using UnityEngine.WSA;
 
-
-
 public class UIManager : MonoBehaviour
 {
     public static UIManager instance { get; private set; }
@@ -81,21 +79,45 @@ public class UIManager : MonoBehaviour
         m_resultPanel.SetActive(false);
         m_objectiveText.text = "COLLECT ALL ITEMS";
 
-      
+
 
         // ↓重い処理らしいので普通にGet関数とか取得できるようにしてもらう
 
         m_hitsField = typeof(PlayerHealth).GetField("currentHits", BindingFlags.NonPublic | BindingFlags.Instance);
         m_maxHitsField = typeof(PlayerHealth).GetField("maxHits", BindingFlags.NonPublic | BindingFlags.Instance);
-       
+
         if (m_maxHitsField != null)
         {
             m_maxLivesMemo = (int)m_maxHitsField.GetValue(m_playerHealth);
         }
     }
 
-void Update()
+    void Update()
     {
+        // ▼ 追加：パッドのAボタン（buttonSouth）でボタンを押す処理
+        if (!isTransitioning && Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame)
+        {
+            // 現在選択中のボタンがあればそれを押す
+            if (UnityEngine.EventSystems.EventSystem.current != null &&
+                UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject != null)
+            {
+                UnityEngine.UI.Button selectedBtn = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.GetComponent<UnityEngine.UI.Button>();
+                if (selectedBtn != null && selectedBtn.interactable)
+                {
+                    selectedBtn.onClick.Invoke();
+                }
+            }
+            // 選択中のものがなければ、表示されている m_button を押す
+            else if (m_button != null && m_button.activeInHierarchy)
+            {
+                UnityEngine.UI.Button btn = m_button.GetComponentInChildren<UnityEngine.UI.Button>();
+                if (btn != null && btn.interactable)
+                {
+                    btn.onClick.Invoke();
+                }
+            }
+        }
+
         if (!m_isGameActive) return;
 
         if (m_passedTime > 0 && !m_checkMaxItem)
@@ -242,7 +264,14 @@ void Update()
         m_finalRankText.text = rank.ToString();
         m_finalRankText.gameObject.SetActive(true);
         m_button.gameObject.SetActive(true);
-        
+
+        // ▼ 追加：ボタン表示時に自動で選択状態にする
+        UnityEngine.UI.Button resultBtn = m_button.GetComponentInChildren<UnityEngine.UI.Button>();
+        if (resultBtn != null && UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(resultBtn.gameObject);
+        }
+
         PlaySESound(m_rankSe);
 
     }

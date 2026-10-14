@@ -12,6 +12,8 @@ public class ButtonManager : MonoBehaviour
     [Header("文字色設定")]
     [SerializeField] private Color normalColor = Color.white;     // 通常時の文字色
     [SerializeField] private Color highlightColor = Color.red;    // 選択中の文字色
+    [SerializeField, Range(0f, 1f)] private float minAlpha = 0.3f; // 半透明時の最小アルファ値
+    [SerializeField] private float blinkSpeed = 2.0f;             // 半透明を繰り返す速さ
 
     [Header("サウンド設定")]
     [SerializeField] private AudioClip clickSound;                // ボタンを押した時のSE
@@ -22,6 +24,9 @@ public class ButtonManager : MonoBehaviour
 
     // マウス移動検知用
     private Vector3 lastMousePosition;
+
+    // 点滅アニメーション用のタイマー
+    private float blinkTimer = 0f;
 
     void Start()
     {
@@ -38,7 +43,7 @@ public class ButtonManager : MonoBehaviour
                 {
                     string btnName = btn.gameObject.name.ToLower();
                     // pad、keymou、backが含まれるボタンはクリック音をならさない
-                    if (btnName.Contains("pad") || btnName.Contains("keymou")|| btnName.Contains("back"))
+                    if (btnName.Contains("pad") || btnName.Contains("keymou") || btnName.Contains("back"))
                     {
                         continue;
                     }
@@ -69,6 +74,7 @@ public class ButtonManager : MonoBehaviour
 
                 // 新しく選択されたボタンの文字を赤にする
                 SetTextColor(EventSystem.current.currentSelectedGameObject, highlightColor);
+                blinkTimer = 0f; // 選択が切り替わったら不透明の状態からスタートさせる
             }
 
             lastSelectedObject = EventSystem.current.currentSelectedGameObject;
@@ -78,6 +84,17 @@ public class ButtonManager : MonoBehaviour
         {
             EventSystem.current.SetSelectedGameObject(lastSelectedObject);
             SetTextColor(lastSelectedObject, highlightColor);
+        }
+
+        // 選択中のボタンがある間、文字の透明度（アルファ値）を周期的に変化させる
+        if (lastSelectedObject != null)
+        {
+            // ポーズ中（Time.timeScale == 0）でも点滅するように unscaledDeltaTime を使用
+            blinkTimer += Time.unscaledDeltaTime * blinkSpeed;
+
+            Color blinkingColor = highlightColor;
+            blinkingColor.a = Mathf.Lerp(highlightColor.a, minAlpha, Mathf.PingPong(blinkTimer, 1.0f));
+            SetTextColor(lastSelectedObject, blinkingColor);
         }
     }
 

@@ -2235,6 +2235,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonManager
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   highlightColor: {r: 1, g: 0, b: 0, a: 1}
+  minAlpha: 0.3
+  blinkSpeed: 2
   clickSound: {fileID: 8300000, guid: 78d57be9ef22a66458927df120b96082, type: 3}
   autoAddClickSound: 1
 --- !u!114 &2023804127

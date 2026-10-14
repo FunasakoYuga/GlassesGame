@@ -24,4 +24,14 @@ public class GoaLItem : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    /// <summary>
+    /// アイテムが存在しているかどうかを返す
+    /// </summary>
+    /// <param name="isExist"></param>
+    /// <returns>true:存在している　false:存在していない</returns>
+    bool GetIsExist(bool isExist)
+    {
+        return isExist;
+    }
 }

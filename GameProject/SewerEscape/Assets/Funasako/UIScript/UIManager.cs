@@ -51,7 +51,9 @@ public class UIManager : MonoBehaviour
     private bool m_checkMaxItem = false;
 
     [SerializeField] private KeyFgmManager m_keymanager;
-    [SerializeField] private PlayerHealth m_playerHealth;
+    //    [SerializeField] private PlayerHealth m_playerHealth;
+    PlayerHealth m_playerHealth;
+
 
     public AudioSource m_audioSource;
     public AudioClip m_scoreSe;
@@ -67,6 +69,8 @@ public class UIManager : MonoBehaviour
     void Start()
     {
         isTransitioning = false;
+
+        m_playerHealth = FindAnyObjectByType<PlayerHealth>();
 
         // フェードパネルの初期化（透明・クリック透過）
         if (fadeCanvasGroup != null)

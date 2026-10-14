@@ -350,17 +350,29 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1862699105419521100, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4255527304303016179, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_Name
       value: UI
+      objectReference: {fileID: 0}
+    - target: {fileID: 4255527304303016179, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4523226472373001960, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_text
       value: CORRECT ITEM 100
       objectReference: {fileID: 0}
+    - target: {fileID: 5620933924517878667, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7977562751710139899, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_text
-      value: LIVES:3
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8268666955364292630, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_IsActive

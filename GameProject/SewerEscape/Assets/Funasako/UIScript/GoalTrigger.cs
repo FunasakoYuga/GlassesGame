@@ -3,7 +3,6 @@ using UnityEngine;
 public class GoalTrigger : MonoBehaviour
 {
     private bool isGoalReached = false;
-    [SerializeField] private UIManager uiManager;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -11,6 +10,8 @@ public class GoalTrigger : MonoBehaviour
         {
             return;
         }
+
+        UIManager uiManager = FindAnyObjectByType<UIManager>();
 
         isGoalReached = true;
         uiManager.ShowResultUI();

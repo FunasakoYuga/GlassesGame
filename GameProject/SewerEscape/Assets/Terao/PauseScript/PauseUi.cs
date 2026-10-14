@@ -426,10 +426,6 @@ public class PauseManager : MonoBehaviour
 
             fadeCanvasGroup.alpha = 1f;
         }
-        else
-        {
-            Debug.LogWarning("[PauseManager] FadeCanvasGroup が設定されていません！フェードなしで遷移します。");
-        }
 
         // シーン遷移前に必ず時間とカーソルを戻しておく
         Time.timeScale = 1f;

@@ -16,6 +16,7 @@ public class EnemyChase : MonoBehaviour
     private NavMeshAgent agent;
     private Animator animator;
     private Transform playerTransform;
+    private HeartbeatController playerHeartbeat; // プレイヤー心臓SE制御用の参照
 
     [Header("ターゲット設定")]
     [SerializeField] private string playerTag = "Player";
@@ -45,9 +46,9 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private AudioClip noticeSound;         // 敵に見つかった時のSE
 
     [Header("出現条件設定（追加の敵用）")]
-    [SerializeField] private bool useSpawnCondition = false;      // 条件付きで出現させる場合はチェックを入れる
-    [SerializeField] private int requiredCollectedCount = 50;     // 出現に必要なアイテム取得数
-    private bool isSpawned = false;                               // すでに出現したか
+    [SerializeField] private bool useSpawnCondition = false;     // 条件付きで出現させる場合はチェックを入れる
+    [SerializeField] private int requiredCollectedCount = 50;    // 出現に必要なアイテム取得数
+    private bool isSpawned = false;                              // すでに出現したか
     private KeyFgmManager keyManager;
     private Renderer[] renderers;
     private Collider enemyCollider;
@@ -55,14 +56,15 @@ public class EnemyChase : MonoBehaviour
     [Header("被弾時（ロビー送還時）のテレポート設定")]
     [SerializeField] private bool teleportOnHit = true;             // プレイヤーにヒットした時にテレポートするか
     [SerializeField] private float teleportDelay = 2.5f;            // 被弾からテレポートするまでの遅延時間（秒）
-    [SerializeField] private bool useStartPosAsLobby = true;      // チェックを入れるとStart時の位置に戻る
-    [SerializeField] private Vector3 customLobbyTeleportPos;      // 上のチェックを外した場合のテレポート先座標
-    private Vector3 startPosition;                                // 初期位置の保持用
+    [SerializeField] private bool useStartPosAsLobby = true;     // チェックを入れるとStart時の位置に戻る
+    [SerializeField] private Vector3 customLobbyTeleportPos;     // 上のチェックを外した場合のテレポート先座標
+    private Vector3 startPosition;                               // 初期位置の保持用
 
     private Vector3 lastKnownPosition; // 最後にプレイヤーを見た位置
     private float currentWaitDuration = 2f; // 今回立ち止まる目標時間
     private float waitTimer = 0f;
     private bool isAttacking = false;
+    private bool isWaitingTeleport = false; // ★追加：被弾からロビー送還（テレポート）完了までの待機フラグ
 
     void Start()
     {
@@ -70,8 +72,7 @@ public class EnemyChase : MonoBehaviour
         animator = GetComponent<Animator>();
         enemyCollider = GetComponent<Collider>();
         renderers = GetComponentsInChildren<Renderer>();
-        keyManager = FindObjectOfType<KeyFgmManager>();
-
+        keyManager = FindFirstObjectByType<KeyFgmManager>();
         // AudioSourceが未設定なら自動取得を試みる
         if (audioSource == null)
         {
@@ -125,11 +126,16 @@ public class EnemyChase : MonoBehaviour
             if (playerObj != null)
             {
                 playerTransform = playerObj.transform;
+                // PlayerからHeartbeatControllerを取得
+                playerHeartbeat = playerObj.GetComponentInChildren<HeartbeatController>();
             }
         }
 
         float distanceToPlayer = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : float.MaxValue;
         bool canSeePlayer = (playerTransform != null) && HasLineOfSight(distanceToPlayer);
+
+        // 3段階の索敵範囲に応じてプレイヤーに心臓音の危険度を通知
+        UpdateHeartbeatNotification(distanceToPlayer);
 
         switch (currentState)
         {
@@ -150,6 +156,26 @@ public class EnemyChase : MonoBehaviour
         {
             bool isMoving = (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) && agent.velocity.magnitude > 0.1f;
             animator.SetBool("IsMoving", isMoving);
+        }
+    }
+
+    // ★追加：距離に応じて3段階の危険度を通知するメソッド
+    private void UpdateHeartbeatNotification(float distance)
+    {
+        // ★追加：攻撃中やロビー送還（テレポート）待ちの間は心臓音の通知を行わない
+        if (playerHeartbeat == null || isAttacking || isWaitingTeleport) return;
+
+        if (distance <= closeDetectionRange)
+        {
+            playerHeartbeat.NotifyDanger(DangerLevel.Stage3); // 至近距離（第3段階）
+        }
+        else if (distance <= detectionRange)
+        {
+            playerHeartbeat.NotifyDanger(DangerLevel.Stage2); // 発見距離（第2段階）
+        }
+        else if (distance <= loseTargetRange)
+        {
+            playerHeartbeat.NotifyDanger(DangerLevel.Stage1); // 見失う距離（第1段階）
         }
     }
 
@@ -310,6 +336,12 @@ public class EnemyChase : MonoBehaviour
     {
         isAttacking = true;
 
+        // ★追加：プレイヤーにヒットした瞬間に心臓音を通常（停止）に戻す
+        if (playerHeartbeat != null)
+        {
+            playerHeartbeat.ResetHeartbeat();
+        }
+
         if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             agent.isStopped = true;
@@ -331,6 +363,7 @@ public class EnemyChase : MonoBehaviour
 
         if (teleportOnHit)
         {
+            isWaitingTeleport = true; // ★追加：テレポート完了まで心臓音の通知を停止する
             Invoke(nameof(DelayedTeleport), teleportDelay);
         }
 
@@ -344,6 +377,8 @@ public class EnemyChase : MonoBehaviour
 
     private void TeleportToLobbyPosition()
     {
+        isWaitingTeleport = false; // ★追加：テレポート完了に伴いフラグを解除
+
         Vector3 targetPos = useStartPosAsLobby ? startPosition : customLobbyTeleportPos;
 
         if (agent != null && agent.isOnNavMesh)
@@ -353,6 +388,12 @@ public class EnemyChase : MonoBehaviour
         else
         {
             transform.position = targetPos;
+        }
+
+        // ★追加：ロビー送還（リスポーン）完了時にも心臓音を確実に通常へ戻す
+        if (playerHeartbeat != null)
+        {
+            playerHeartbeat.ResetHeartbeat();
         }
 
         SetState(EnemyState.Searching);

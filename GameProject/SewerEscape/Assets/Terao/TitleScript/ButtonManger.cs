@@ -47,6 +47,12 @@ public class ButtonManager : MonoBehaviour
                     {
                         continue;
                     }
+
+                    // AllSceneのとき、continue、manual、titleが含まれるボタンもクリック音を鳴らさない
+                    if (currentSceneName == "AllScene" && (btnName.Contains("continue") || btnName.Contains("manual") || btnName.Contains("title")))
+                    {
+                        continue;
+                    }
                 }
                 btn.onClick.AddListener(PlayClickSound);
             }

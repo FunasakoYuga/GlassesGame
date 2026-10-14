@@ -29,10 +29,24 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private AudioSource GameOveraudioSource;               // ゲームオーバーサウンド
 
     [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ
-    [SerializeField] private AudioClip[] dieClips;         // 死亡SE
-    [SerializeField] private AudioClip gameOverClip;       // 3回死亡時（ゲームオーバー時）のSE
+    [SerializeField] private AudioClip[] dieClips;          // 死亡SE
+    [SerializeField] private AudioClip gameOverClip;        // 3回死亡時（ゲームオーバー時）のSE
 
-    private int currentHits = 0;
+    // ★追加：敵に当たった時にプレイヤー（カメラ）が倒れ込む演出設定
+    [Header("被弾時の転倒（倒れ込み）演出設定")]
+    [SerializeField] private bool enableFallDownEffect = true;      // 倒れ込むカメラ演出を行うか
+    [SerializeField] private Transform cameraTransform;             // 倒す対象のカメラ（未設定時はMainCameraを自動取得）
+    [SerializeField] private float fallDelay = 0.4f;                // 敵の方を向いてから倒れ始めるまでの待ち時間（秒）
+    [SerializeField] private float fallDuration = 0.6f;             // 倒れ込むのにかかる時間（秒）
+    [SerializeField] private float fallDropHeight = 0.8f;           // 倒れたときに視点が下がる高さ（メートル）
+    [SerializeField] private float fallRollAngle = 65f;             // 倒れたときに首（カメラ）が横に傾く角度
+    [SerializeField] private string fallTriggerName = "";           // Animatorで倒れるモーションを再生する場合のTrigger名（空欄ならスキップ）
+
+    private Vector3 defaultCamLocalPos;                             // ★追加：カメラの初期ローカル座標（リスポーン復帰用）
+    private Quaternion defaultCamLocalRot;                          // ★追加：カメラの初期ローカル回転（リスポーン復帰用）
+    private HeartbeatController heartbeatController;                // ★追加：心臓音リセット用の参照
+
+    public int currentHits = 0;
     private bool isDead = false;
     private bool isRespawning = false;
 
@@ -50,6 +64,9 @@ public class PlayerHealth : MonoBehaviour
         spawnRotation = transform.rotation;
         characterController = GetComponent<CharacterController>();
 
+        // 心臓音スクリプトの取得
+        heartbeatController = GetComponentInChildren<HeartbeatController>();
+
         if (playerMove == null)
         {
             playerMove = GetComponent<PlayerMove>();
@@ -65,6 +82,19 @@ public class PlayerHealth : MonoBehaviour
         if (playerAudioSources == null || playerAudioSources.Length == 0)
         {
             playerAudioSources = GetComponentsInChildren<AudioSource>();
+        }
+
+        // カメラが未設定なら子オブジェクトまたはMainCameraを取得し、初期位置を記録
+        if (cameraTransform == null)
+        {
+            Camera cam = GetComponentInChildren<Camera>();
+            if (cam == null) cam = Camera.main;
+            if (cam != null) cameraTransform = cam.transform;
+        }
+        if (cameraTransform != null)
+        {
+            defaultCamLocalPos = cameraTransform.localPosition;
+            defaultCamLocalRot = cameraTransform.localRotation;
         }
 
         if (fadeCanvasGroup != null)
@@ -103,6 +133,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     // 被弾処理
+    // 被弾処理
     private void HandleHit(GameObject target)
     {
         currentHits++;
@@ -122,15 +153,81 @@ public class PlayerHealth : MonoBehaviour
             playerMove.RotateToTarget(enemyCenter, 0.4f);
         }
 
+        // 3回目（ゲームオーバー）の死亡かどうかで心臓音の扱いを分岐
         if (currentHits >= maxHits)
         {
+            // 3回目の死亡（ゲームオーバー）のときは、心臓音を完全に停止・リセットして二度と鳴らないようにする
+            if (heartbeatController != null)
+            {
+                heartbeatController.ResetHeartbeat();
+                // 心臓音のコンポーネント自体を無効化しておくと完全に安心です
+                heartbeatController.enabled = false;
+            }
+
             StartCoroutine(Die());
         }
         else
         {
+            // ２回被弾時は心臓音を一度リセットする
+            if (heartbeatController != null)
+            {
+                heartbeatController.ResetHeartbeat();
+            }
+
             isRespawning = true;
             StartCoroutine(RespawnRoutine());
         }
+
+        // プレイヤーが倒れる演出
+        if (enableFallDownEffect)
+        {
+            StartCoroutine(FallDownRoutine());
+        }
+    }
+
+    // 敵の方を向いたあと、地面にバタッと倒れ込む演出
+    private IEnumerator FallDownRoutine()
+    {
+        // 敵の方を完全に向き終わるまで待つ
+        if (playerMove != null)
+        {
+            while (playerMove.IsRotatingToTarget)
+            {
+                yield return null;
+            }
+        }
+
+        // 敵の方へ振り向く演出が終わるまで少し待つ
+        if (fallDelay > 0f)
+        {
+            yield return new WaitForSeconds(fallDelay);
+        }
+
+        if (cameraTransform == null) yield break;
+
+        Vector3 startPos = cameraTransform.localPosition;
+        Quaternion startRot = cameraTransform.localRotation;
+
+        // 地面に向かって視点を下げ、首を横に傾ける目標値を作成
+        Vector3 targetPos = new Vector3(startPos.x, Mathf.Max(0.15f, startPos.y - fallDropHeight), startPos.z);
+        Quaternion targetRot = startRot * Quaternion.Euler(15f, 0f, fallRollAngle);
+
+        float timer = 0f;
+        while (timer < fallDuration)
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / fallDuration);
+            // 最初はゆっくり、地面にぶつかる直前に加速して倒れるイージング（t * t）
+            float easeIn = t * t;
+
+            cameraTransform.localPosition = Vector3.Lerp(startPos, targetPos, easeIn);
+            cameraTransform.localRotation = Quaternion.Slerp(startRot, targetRot, easeIn);
+
+            yield return null;
+        }
+
+        cameraTransform.localPosition = targetPos;
+        cameraTransform.localRotation = targetRot;
     }
 
     private IEnumerator RespawnRoutine()
@@ -160,10 +257,23 @@ public class PlayerHealth : MonoBehaviour
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
 
+        // ★追加：倒れたカメラの位置と角度を元の高さ・向きに戻す
+        if (cameraTransform != null)
+        {
+            cameraTransform.localPosition = defaultCamLocalPos;
+            cameraTransform.localRotation = defaultCamLocalRot;
+        }
+
         // 視点と操作の初期化
         if (playerMove != null)
         {
             playerMove.ResetLook();
+        }
+
+        // リスポーン地点に戻った際にも心臓音をリセット
+        if (heartbeatController != null)
+        {
+            heartbeatController.ResetHeartbeat();
         }
 
         if (characterController != null)

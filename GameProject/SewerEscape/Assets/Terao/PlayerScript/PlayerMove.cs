@@ -45,6 +45,8 @@ public class PlayerMove : MonoBehaviour
     private Vector3 verticalVelocity;
     private float cameraPitch = 0f;
 
+
+
     // カメラ揺れ基準位置管理用
     private Vector3 defaultCameraLocalPos;
     private float bobTimer = 0f;
@@ -58,6 +60,8 @@ public class PlayerMove : MonoBehaviour
     // 被弾時等の視点旋回制御用
     private Coroutine lookCoroutine;
     private bool isRotatingToTarget = false;
+
+    public bool IsRotatingToTarget => isRotatingToTarget; // 外部から旋回中かを確認するフラグ
 
     // アニメーション制御用
     private Animator animator;
@@ -155,14 +159,19 @@ public class PlayerMove : MonoBehaviour
             }
         }
 
-        if (!hasGamepadLook && Mouse.current != null)
+        if (Mouse.current != null)
         {
-            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-            if (mouseDelta.sqrMagnitude > 0.001f)
+            if (!hasGamepadLook)
             {
-                yaw = mouseDelta.x * MouselookSpeed * 0.1f;
-                pitch = mouseDelta.y * MouselookSpeed * 0.1f;
+                Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+                if (mouseDelta.sqrMagnitude > 0.001f)
+                {
+                    yaw = mouseDelta.x * MouselookSpeed * 0.1f;
+                    pitch = mouseDelta.y * MouselookSpeed * 0.1f;
+                }
             }
+
+            // 振り向き入力(視点反転)はパッド視点入力の有無に関係なく判定する
             if (Mouse.current.leftButton.isPressed) isLookingBack = true;
         }
 
@@ -401,6 +410,14 @@ public class PlayerMove : MonoBehaviour
 
     public void ResetLook()
     {
+        // 旋回中のコルーチンが残っていると視点がロックされたままになるため停止する
+        if (lookCoroutine != null)
+        {
+            StopCoroutine(lookCoroutine);
+            lookCoroutine = null;
+        }
+        isRotatingToTarget = false;
+
         cameraPitch = 0f;
         verticalVelocity = Vector3.zero;
         if (cameraTransform != null)
@@ -477,14 +494,17 @@ public class PlayerMove : MonoBehaviour
         {
             elapsedTime += Time.deltaTime;
             float t = Mathf.Clamp01(elapsedTime / duration);
-            float smoothT = Mathf.SmoothStep(0f, 1f, t);
+
+            // ▼ ここを変更：前半はゆっくり、後半（残り半分）から急加速するイージング（EaseInQuad / t * t）
+            // ※もっと急に加速させたい場合は t * t * t（EaseInCubic）にするとさらに後半が速くなります
+            float easeInT = t * t * t * t;
 
             // プレイヤー本体の水平回転
-            float currentYaw = startYaw + deltaYaw * smoothT;
+            float currentYaw = startYaw + deltaYaw * easeInT;
             transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
             // カメラの上下ピッチ回転
-            cameraPitch = Mathf.Lerp(startPitch, targetPitch, smoothT);
+            cameraPitch = Mathf.Lerp(startPitch, targetPitch, easeInT);
             if (cameraTransform != null)
             {
                 cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);

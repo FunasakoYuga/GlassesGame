@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,12 +9,17 @@ using UnityEngine.InputSystem;
 public class GoaLItemGenerator : MonoBehaviour
 {
     [SerializeField] GameObject goalitemPre;    // ゴールアイテム
-    [SerializeField] float height = 0.6f;   // 道の上に浮かせる高さ
+    [SerializeField] Transform lobby;  // ゴールアイテムを生成するロビー(とりあえず一つ)
     KeyFgmManager keyManager;   // KeyFgmManager
+
+
+    [SerializeField] float height = 0.6f;   // 道の上に浮かせる高さ
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         keyManager = GameObject.Find("KeyFgmManager").GetComponent<KeyFgmManager>();
+        Instantiate(goalitemPre, new Vector3(lobby.position.x, lobby.position.y + height, lobby.position.z), Quaternion.identity, transform);
     }
 
     // Update is called once per frame
@@ -21,7 +27,7 @@ public class GoaLItemGenerator : MonoBehaviour
     {
         if(keyManager.GetKeyFgmNum() < 0)
         {
-            //Instantiate(goalitemPre,)
+            
         }
     }
 }

@@ -21,7 +21,7 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private string playerTag = "Player";
 
     [Header("ランダムパトロール（Wander）設定")]
-    [SerializeField] private float wanderRadius = 8f;        // 1回移動で探すランダム位置の半径
+    [SerializeField] private float wanderRadius = 8f;         // 1回移動で探すランダム位置の半径
     [SerializeField] private float minWaitTime = 1f;          // 到着後の最小立ち止まり時間（秒）
     [SerializeField] private float maxWaitTime = 4f;          // 到着後の最大立ち止まり時間（秒）
 
@@ -49,7 +49,7 @@ public class EnemyChase : MonoBehaviour
     private Collider enemyCollider;
 
     [Header("被弾時（ロビー送還時）のテレポート設定")]
-    [SerializeField] private bool teleportOnHit = true;           // プレイヤーにヒットした時にテレポートするか
+    [SerializeField] private bool teleportOnHit = true;            // プレイヤーにヒットした時にテレポートするか
     [SerializeField] private float teleportDelay = 2.5f;          // 被弾からテレポートするまでの遅延時間（秒）
     [SerializeField] private bool useStartPosAsLobby = true;      // チェックを入れるとStart時の位置に戻る
     [SerializeField] private Vector3 customLobbyTeleportPos;      // 上のチェックを外した場合のテレポート先座標
@@ -138,7 +138,7 @@ public class EnemyChase : MonoBehaviour
 
         if (!isAttacking)
         {
-            bool isMoving = agent.velocity.magnitude > 0.1f;
+            bool isMoving = (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) && agent.velocity.magnitude > 0.1f;
             animator.SetBool("IsMoving", isMoving);
         }
     }
@@ -161,13 +161,17 @@ public class EnemyChase : MonoBehaviour
             return;
         }
 
-        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        // ▼ 追加：NavMesh上に正しく乗っている時のみ remainingDistance を判定する
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
-            waitTimer += Time.deltaTime;
-            if (waitTimer >= currentWaitDuration)
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
             {
-                SetRandomDestination();
-                waitTimer = 0f;
+                waitTimer += Time.deltaTime;
+                if (waitTimer >= currentWaitDuration)
+                {
+                    SetRandomDestination();
+                    waitTimer = 0f;
+                }
             }
         }
     }
@@ -178,7 +182,7 @@ public class EnemyChase : MonoBehaviour
 
         lastKnownPosition = playerTransform.position;
 
-        if (!isAttacking)
+        if (!isAttacking && agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             agent.SetDestination(lastKnownPosition);
         }
@@ -197,19 +201,25 @@ public class EnemyChase : MonoBehaviour
             return;
         }
 
-        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        // ▼ 追加：NavMesh上に正しく乗っている時のみ remainingDistance を判定する
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
-            waitTimer += Time.deltaTime;
-
-            if (waitTimer >= searchWaitTime)
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
             {
-                SetState(EnemyState.Searching);
+                waitTimer += Time.deltaTime;
+
+                if (waitTimer >= searchWaitTime)
+                {
+                    SetState(EnemyState.Searching);
+                }
             }
         }
     }
 
     private void SetRandomDestination()
     {
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh) return;
+
         Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
         randomDirection += transform.position;
 
@@ -226,6 +236,8 @@ public class EnemyChase : MonoBehaviour
     {
         currentState = newState;
         waitTimer = 0f;
+
+        if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh) return;
 
         switch (newState)
         {
@@ -280,8 +292,12 @@ public class EnemyChase : MonoBehaviour
     private void StartAttack()
     {
         isAttacking = true;
-        agent.isStopped = true;
-        agent.velocity = Vector3.zero;
+
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
 
         animator.SetBool("IsMoving", false);
         animator.SetTrigger(attackTriggerName);

@@ -40,6 +40,14 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private string attackTriggerName = "Attack";
     [SerializeField] private float attackCooldown = 1.5f;
 
+    [Header("出現条件設定（追加の敵用）")]
+    [SerializeField] private bool useSpawnCondition = false;      // 条件付きで出現させる場合はチェックを入れる
+    [SerializeField] private int requiredCollectedCount = 50;     // 出現に必要なアイテム取得数
+    private bool isSpawned = false;                               // すでに出現したか
+    private KeyFgmManager keyManager;
+    private Renderer[] renderers;
+    private Collider enemyCollider;
+
     private Vector3 lastKnownPosition; // 最後にプレイヤーを見た位置
     private float currentWaitDuration = 2f; // 今回立ち止まる目標時間
     private float waitTimer = 0f;
@@ -49,16 +57,51 @@ public class EnemyChase : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        enemyCollider = GetComponent<Collider>();
+        renderers = GetComponentsInChildren<Renderer>();
+        keyManager = FindObjectOfType<KeyFgmManager>();
 
-        // 初回のランダム目的地を設定
-        if (currentState == EnemyState.Searching)
+        if (useSpawnCondition)
         {
-            SetRandomDestination();
+            // 出現条件付きの敵の場合、最初は非表示＆無効化して待機
+            SetSpawnState(false);
+            isSpawned = false;
+        }
+        else
+        {
+            isSpawned = true;
+            // 初回のランダム目的地を設定
+            if (currentState == EnemyState.Searching)
+            {
+                SetRandomDestination();
+            }
         }
     }
 
     void Update()
     {
+        // 出現条件付きの敵で、まだ出現していない場合
+        if (useSpawnCondition && !isSpawned)
+        {
+            if (keyManager != null)
+            {
+                // 取得したアイテム数を計算 (全体の数 - 残り数)
+                int collectedCount = keyManager.GetTotalKeyFgmNum() - keyManager.GetKeyFgmNum();
+                if (collectedCount >= requiredCollectedCount)
+                {
+                    // 条件達成！敵を出現させる
+                    SetSpawnState(true);
+                    isSpawned = true;
+                    if (currentState == EnemyState.Searching)
+                    {
+                        SetRandomDestination();
+                    }
+                    Debug.Log($"アイテムが {collectedCount} 個取得されたため、追加の敵が出現しました！");
+                }
+            }
+            return; // 出現するまでは通常のAI処理を行わない
+        }
+
         // スポーン後などにプレイヤーが新しく読み込まれた場合も考慮して自動再検索
         if (playerTransform == null)
         {
@@ -92,6 +135,17 @@ public class EnemyChase : MonoBehaviour
         {
             bool isMoving = agent.velocity.magnitude > 0.1f;
             animator.SetBool("IsMoving", isMoving);
+        }
+    }
+
+    // --- 出現・非表示の切り替え処理 ---
+    private void SetSpawnState(bool isActive)
+    {
+        if (enemyCollider != null) enemyCollider.enabled = isActive;
+        if (agent != null) agent.enabled = isActive;
+        foreach (var r in renderers)
+        {
+            if (r != null) r.enabled = isActive;
         }
     }
 
@@ -165,18 +219,14 @@ public class EnemyChase : MonoBehaviour
     // --- ランダム目的地設定ロジック ---
     private void SetRandomDestination()
     {
-        // 敵を中心とした「 wanderRadius 」範囲内のランダムな球体上の点を取得
         Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
         randomDirection += transform.position;
 
         NavMeshHit hit;
-        // 指定したランダム位置から一番近い「NavMesh上の床」の位置を取得
         if (NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas))
         {
             agent.isStopped = false;
             agent.SetDestination(hit.position);
-
-            // 到着後に立ち止まる時間もランダム（例: 1秒〜4秒の間で毎回変化）
             currentWaitDuration = Random.Range(minWaitTime, maxWaitTime);
         }
     }
@@ -209,23 +259,18 @@ public class EnemyChase : MonoBehaviour
     {
         if (playerTransform == null) return false;
 
-        // 至近距離（背後含む）にいる場合は無条件で発見
         if (distance <= closeDetectionRange)
         {
             return true;
         }
 
-        // --- 以下は至近距離より遠い場合（通常の視界判定） ---
-
         Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
         Vector3 targetEyePosition = playerTransform.position + Vector3.up * eyeHeight;
         Vector3 directionToPlayer = (targetEyePosition - eyePosition).normalized;
 
-        // 視野角チェック（正面からの角度）
         float angle = Vector3.Angle(transform.forward, directionToPlayer);
         if (angle > fieldOfViewAngle * 0.5f) return false;
 
-        // 障害物（壁）チェック
         if (Physics.Raycast(eyePosition, directionToPlayer, distance, obstacleLayer))
         {
             return false;
@@ -268,17 +313,14 @@ public class EnemyChase : MonoBehaviour
     // --- Gizmos描画 ---
     private void OnDrawGizmosSelected()
     {
-        // 至近距離の可視化（マゼンタ色）
         Gizmos.color = Color.magenta;
         Gizmos.DrawWireSphere(transform.position, closeDetectionRange);
 
-        // 発見・見失う距離の可視化
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, loseTargetRange);
 
-        // ランダム目標を探す可視化用の円（緑色）
         if (currentState == EnemyState.Searching)
         {
             Gizmos.color = Color.green;

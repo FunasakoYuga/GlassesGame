@@ -40,6 +40,21 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private string attackTriggerName = "Attack";
     [SerializeField] private float attackCooldown = 1.5f;
 
+    [Header("出現条件設定（追加の敵用）")]
+    [SerializeField] private bool useSpawnCondition = false;      // 条件付きで出現させる場合はチェックを入れる
+    [SerializeField] private int requiredCollectedCount = 50;     // 出現に必要なアイテム取得数
+    private bool isSpawned = false;                               // すでに出現したか
+    private KeyFgmManager keyManager;
+    private Renderer[] renderers;
+    private Collider enemyCollider;
+
+    [Header("被弾時（ロビー送還時）のテレポート設定")]
+    [SerializeField] private bool teleportOnHit = true;           // プレイヤーにヒットした時にテレポートするか
+    [SerializeField] private float teleportDelay = 2.5f;          // 被弾からテレポートするまでの遅延時間（秒）
+    [SerializeField] private bool useStartPosAsLobby = true;      // チェックを入れるとStart時の位置に戻る
+    [SerializeField] private Vector3 customLobbyTeleportPos;      // 上のチェックを外した場合のテレポート先座標
+    private Vector3 startPosition;                                // 初期位置の保持用
+
     private Vector3 lastKnownPosition; // 最後にプレイヤーを見た位置
     private float currentWaitDuration = 2f; // 今回立ち止まる目標時間
     private float waitTimer = 0f;
@@ -49,17 +64,51 @@ public class EnemyChase : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        enemyCollider = GetComponent<Collider>();
+        renderers = GetComponentsInChildren<Renderer>();
+        keyManager = FindObjectOfType<KeyFgmManager>();
 
-        // 初回のランダム目的地を設定
-        if (currentState == EnemyState.Searching)
+        // 初期位置を記録
+        startPosition = transform.position;
+
+        if (useSpawnCondition)
         {
-            SetRandomDestination();
+            // 出現条件付きの敵の場合、最初は非表示＆無効化して待機
+            SetSpawnState(false);
+            isSpawned = false;
+        }
+        else
+        {
+            isSpawned = true;
+            if (currentState == EnemyState.Searching)
+            {
+                SetRandomDestination();
+            }
         }
     }
 
     void Update()
     {
-        // スポーン後などにプレイヤーが新しく読み込まれた場合も考慮して自動再検索
+        // 出現条件付きの敵で、まだ出現していない場合
+        if (useSpawnCondition && !isSpawned)
+        {
+            if (keyManager != null)
+            {
+                int collectedCount = keyManager.GetTotalKeyFgmNum() - keyManager.GetKeyFgmNum();
+                if (collectedCount >= requiredCollectedCount)
+                {
+                    SetSpawnState(true);
+                    isSpawned = true;
+                    if (currentState == EnemyState.Searching)
+                    {
+                        SetRandomDestination();
+                    }
+                    Debug.Log($"アイテムが {collectedCount} 個取得されたため、追加の敵が出現しました！");
+                }
+            }
+            return;
+        }
+
         if (playerTransform == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag(playerTag);
@@ -87,7 +136,6 @@ public class EnemyChase : MonoBehaviour
                 break;
         }
 
-        // アニメーション制御
         if (!isAttacking)
         {
             bool isMoving = agent.velocity.magnitude > 0.1f;
@@ -95,24 +143,27 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    // --- 各ステートの処理 ---
+    private void SetSpawnState(bool isActive)
+    {
+        if (enemyCollider != null) enemyCollider.enabled = isActive;
+        if (agent != null) agent.enabled = isActive;
+        foreach (var r in renderers)
+        {
+            if (r != null) r.enabled = isActive;
+        }
+    }
 
-    // 1. 完全ランダムパトロール状態の処理
     private void UpdateSearchingState(bool canSeePlayer, float distance)
     {
-        // プレイヤーを発見したら即座に追跡へ
         if (canSeePlayer && distance <= detectionRange)
         {
             SetState(EnemyState.Chasing);
             return;
         }
 
-        // 目的地のランダム地点に到達したか判定
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
             waitTimer += Time.deltaTime;
-
-            // ランダムに設定された「立ち止まり時間」を経過したら、次の新しいランダム目的地を設定
             if (waitTimer >= currentWaitDuration)
             {
                 SetRandomDestination();
@@ -121,7 +172,6 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    // 2. 追跡状態の処理
     private void UpdateChasingState(bool canSeePlayer, float distance)
     {
         if (playerTransform == null) return;
@@ -135,17 +185,14 @@ public class EnemyChase : MonoBehaviour
 
         if (!canSeePlayer || distance > loseTargetRange)
         {
-            Debug.Log("視認不可！最後の目撃位置に向かいます。");
             SetState(EnemyState.Investigating);
         }
     }
 
-    // 3. 調査状態（最後の目撃位置へ移動）の処理
     private void UpdateInvestigatingState(bool canSeePlayer, float distance)
     {
         if (canSeePlayer && distance <= detectionRange)
         {
-            Debug.Log("プレイヤーを再発見！");
             SetState(EnemyState.Chasing);
             return;
         }
@@ -156,32 +203,25 @@ public class EnemyChase : MonoBehaviour
 
             if (waitTimer >= searchWaitTime)
             {
-                Debug.Log("見失いました。ランダムパトロールへ切り替えます。");
                 SetState(EnemyState.Searching);
             }
         }
     }
 
-    // --- ランダム目的地設定ロジック ---
     private void SetRandomDestination()
     {
-        // 敵を中心とした「 wanderRadius 」範囲内のランダムな球体上の点を取得
         Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
         randomDirection += transform.position;
 
         NavMeshHit hit;
-        // 指定したランダム位置から一番近い「NavMesh上の床」の位置を取得
         if (NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas))
         {
             agent.isStopped = false;
             agent.SetDestination(hit.position);
-
-            // 到着後に立ち止まる時間もランダム（例: 1秒〜4秒の間で毎回変化）
             currentWaitDuration = Random.Range(minWaitTime, maxWaitTime);
         }
     }
 
-    // 状態を切り替えるメソッド
     private void SetState(EnemyState newState)
     {
         currentState = newState;
@@ -204,28 +244,22 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    // --- 視線判定処理 ---
     private bool HasLineOfSight(float distance)
     {
         if (playerTransform == null) return false;
 
-        // 至近距離（背後含む）にいる場合は無条件で発見
         if (distance <= closeDetectionRange)
         {
             return true;
         }
 
-        // --- 以下は至近距離より遠い場合（通常の視界判定） ---
-
         Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
         Vector3 targetEyePosition = playerTransform.position + Vector3.up * eyeHeight;
         Vector3 directionToPlayer = (targetEyePosition - eyePosition).normalized;
 
-        // 視野角チェック（正面からの角度）
         float angle = Vector3.Angle(transform.forward, directionToPlayer);
         if (angle > fieldOfViewAngle * 0.5f) return false;
 
-        // 障害物（壁）チェック
         if (Physics.Raycast(eyePosition, directionToPlayer, distance, obstacleLayer))
         {
             return false;
@@ -234,7 +268,7 @@ public class EnemyChase : MonoBehaviour
         return true;
     }
 
-    // --- 攻撃処理 ---
+    // --- 攻撃（被弾）処理 ---
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag(playerTag) && !isAttacking)
@@ -252,7 +286,45 @@ public class EnemyChase : MonoBehaviour
         animator.SetBool("IsMoving", false);
         animator.SetTrigger(attackTriggerName);
 
+        // プレイヤーの方を向く（演出を合わせるため）
+        if (playerTransform != null)
+        {
+            Vector3 direction = (playerTransform.position - transform.position);
+            direction.y = 0; // 高低差を無視して水平方向のみ向く
+            if (direction != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(direction);
+            }
+        }
+
+        // プレイヤーのフェード演出に合わせて、指定時間（デフォルト2.5秒）遅れてテレポートする
+        if (teleportOnHit)
+        {
+            Invoke(nameof(DelayedTeleport), teleportDelay);
+        }
+
         Invoke(nameof(ResetAttack), attackCooldown);
+    }
+
+    private void DelayedTeleport()
+    {
+        TeleportToLobbyPosition();
+    }
+
+    private void TeleportToLobbyPosition()
+    {
+        Vector3 targetPos = useStartPosAsLobby ? startPosition : customLobbyTeleportPos;
+
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.Warp(targetPos);
+        }
+        else
+        {
+            transform.position = targetPos;
+        }
+
+        SetState(EnemyState.Searching);
     }
 
     private void ResetAttack()
@@ -265,20 +337,16 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    // --- Gizmos描画 ---
     private void OnDrawGizmosSelected()
     {
-        // 至近距離の可視化（マゼンタ色）
         Gizmos.color = Color.magenta;
         Gizmos.DrawWireSphere(transform.position, closeDetectionRange);
 
-        // 発見・見失う距離の可視化
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, loseTargetRange);
 
-        // ランダム目標を探す可視化用の円（緑色）
         if (currentState == EnemyState.Searching)
         {
             Gizmos.color = Color.green;

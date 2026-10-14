@@ -7,7 +7,8 @@ using Unity.VisualScripting;
 using System.Reflection;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
-using UnityEngine.WSA;
+// ビルドしたときバグ発見
+// using UnityEngine.WSA;
 
 
 

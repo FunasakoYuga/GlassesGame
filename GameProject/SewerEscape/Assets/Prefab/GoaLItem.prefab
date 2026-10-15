@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3381332874449498257}
   - component: {fileID: 1583023676669096305}
   - component: {fileID: -4767302671915869374}
+  - component: {fileID: 7303694491122190909}
   m_Layer: 0
   m_Name: GoaLItem
   m_TagString: GoaLItem
@@ -138,3 +139,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 403e3a27c901f034b89dd5a4f59898f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoalTrigger
+--- !u!65 &7303694491122190909
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7059065172823094848}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 11.0637, y: 6.256029, z: 2.425903}
+  m_Center: {x: 0, y: 0, z: 0}

@@ -40,6 +40,6 @@ public class GoaLItemGenerator : MonoBehaviour
     // ゴールアイテムを生成
     void PlaceGoal()
     {
-        Instantiate(goalitemPre, new Vector3(lobby.position.x, lobby.position.y + height, lobby.position.z), Quaternion.identity, transform);
+        Instantiate(goalitemPre, new Vector3(lobby.position.x, lobby.position.y + height + (goalitemPre.transform.localScale.y * 0.1f), lobby.position.z), Quaternion.Euler(-90f, 0f, 0f), transform);
     }
 }

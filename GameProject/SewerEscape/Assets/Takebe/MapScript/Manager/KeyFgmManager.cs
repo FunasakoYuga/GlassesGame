@@ -8,14 +8,14 @@ public class KeyFgmManager : MonoBehaviour
 {
     [SerializeField] int totalKeyFgmNum = 209; // マップ全体に配置する数
     int keyFgmCount;
-    bool isGameClear;
+    [SerializeField] bool isClearReach;
     //[SerializeField] GameObject keyFgm;
     //KeyFragment keyFgmObj;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
     void Start()
     {
-        isGameClear = false;
+    //    isClearReach = false;
         keyFgmCount = totalKeyFgmNum;
     }
 
@@ -24,7 +24,7 @@ public class KeyFgmManager : MonoBehaviour
     {
         if (keyFgmCount <= 0)
         {
-            isGameClear = true;
+            isClearReach = true;
         }
         // シーン内の指定オブジェクトの数を取得
         keyFgmCount = GameObject.FindGameObjectsWithTag("KeyFragment").Length;
@@ -34,11 +34,11 @@ public class KeyFgmManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 鍵のかけらのオブジェクトがなくなったときのクリアフラグ
+    /// 鍵のかけらのオブジェクトがなくなったときのクリア可能状態フラグ
     /// テキスト表示に使って欲しい
     /// </summary>
-    /// <returns>true:クリア false: ゲーム中</returns>
-    public bool IsGameClear(){ return isGameClear;}
+    /// <returns>true:クリアリーチ false: ゲーム中</returns>
+    public bool IsClearReach(){ return isClearReach;}
     /// <summary>
     /// 鍵のかけらの残り個数を取得
     /// テキスト表示に使って欲しい

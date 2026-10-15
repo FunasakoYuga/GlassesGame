@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems; // コントローラーのボタン選択制御用に追加
@@ -46,7 +46,7 @@ public class PlayerHealth : MonoBehaviour
     private Quaternion defaultCamLocalRot;                          // ★追加：カメラの初期ローカル回転（リスポーン復帰用）
     private HeartbeatController heartbeatController;                // ★追加：心臓音リセット用の参照
 
-    public int currentHits = 0;
+    private int currentHits = 0;
     private bool isDead = false;
     private bool isRespawning = false;
 

@@ -267,6 +267,10 @@ public class UIManager : MonoBehaviour
         else if (lostLife == 2) rank = "B";
         m_finalRankText.text = rank.ToString();
         m_finalRankText.gameObject.SetActive(true);
+        PlaySESound(m_rankSe);
+
+        yield return new WaitForSeconds(m_rankDelayTime);
+
         m_button.gameObject.SetActive(true);
 
         // ▼ 追加：ボタン表示時に自動で選択状態にする
@@ -276,7 +280,7 @@ public class UIManager : MonoBehaviour
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(resultBtn.gameObject);
         }
 
-        PlaySESound(m_rankSe);
+        
 
     }
 

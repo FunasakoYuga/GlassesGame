@@ -16,7 +16,6 @@ public class EnemyChase : MonoBehaviour
     private NavMeshAgent agent;
     private Animator animator;
     private Transform playerTransform;
-    private HeartbeatController playerHeartbeat; // プレイヤー心臓SE制御用の参照
 
     [Header("ターゲット設定")]
     [SerializeField] private string playerTag = "Player";
@@ -44,11 +43,20 @@ public class EnemyChase : MonoBehaviour
     [Header("サウンド設定")]
     [SerializeField] private AudioSource audioSource;       // 音を鳴らすAudioSource
     [SerializeField] private AudioClip noticeSound;         // 敵に見つかった時のSE
+    [Range(0f, 1f)][SerializeField] private float noticeSoundVolume = 1.0f; // SEの音量（0.0 〜 1.0）
+
+    [Header("エコー設定（コード制御）")]
+    [SerializeField] private bool useEcho = true;                           // エコーを有効にするか
+    [Range(10f, 5000f)][SerializeField] private float echoDelay = 500f;    // エコーの遅延時間（ミリ秒: 10 〜 5000）
+    [Range(0f, 1f)][SerializeField] private float echoDecayRatio = 0.5f;   // エコーの減衰率（0.0 〜 1.0）
+    [Range(0f, 1f)][SerializeField] private float echoDryMix = 1f;         // 元の音の大きさ（0.0 〜 1.0）
+    [Range(0f, 1f)][SerializeField] private float echoWetMix = 0.5f;       // エコー音の大きさ（0.0 〜 1.0）
+    private AudioEchoFilter echoFilter;                                     // エコーフィルターの参照用
 
     [Header("出現条件設定（追加の敵用）")]
-    [SerializeField] private bool useSpawnCondition = false;     // 条件付きで出現させる場合はチェックを入れる
-    [SerializeField] private int requiredCollectedCount = 50;    // 出現に必要なアイテム取得数
-    private bool isSpawned = false;                              // すでに出現したか
+    [SerializeField] private bool useSpawnCondition = false;      // 条件付きで出現させる場合はチェックを入れる
+    [SerializeField] private int requiredCollectedCount = 50;     // 出現に必要なアイテム取得数
+    private bool isSpawned = false;                               // すでに出現したか
     private KeyFgmManager keyManager;
     private Renderer[] renderers;
     private Collider enemyCollider;
@@ -56,15 +64,14 @@ public class EnemyChase : MonoBehaviour
     [Header("被弾時（ロビー送還時）のテレポート設定")]
     [SerializeField] private bool teleportOnHit = true;             // プレイヤーにヒットした時にテレポートするか
     [SerializeField] private float teleportDelay = 2.5f;            // 被弾からテレポートするまでの遅延時間（秒）
-    [SerializeField] private bool useStartPosAsLobby = true;     // チェックを入れるとStart時の位置に戻る
-    [SerializeField] private Vector3 customLobbyTeleportPos;     // 上のチェックを外した場合のテレポート先座標
-    private Vector3 startPosition;                               // 初期位置の保持用
+    [SerializeField] private bool useStartPosAsLobby = true;      // チェックを入れるとStart時の位置に戻る
+    [SerializeField] private Vector3 customLobbyTeleportPos;      // 上のチェックを外した場合のテレポート先座標
+    private Vector3 startPosition;                                // 初期位置の保持用
 
     private Vector3 lastKnownPosition; // 最後にプレイヤーを見た位置
     private float currentWaitDuration = 2f; // 今回立ち止まる目標時間
     private float waitTimer = 0f;
     private bool isAttacking = false;
-    private bool isWaitingTeleport = false; // ★追加：被弾からロビー送還（テレポート）完了までの待機フラグ
 
     void Start()
     {
@@ -72,19 +79,20 @@ public class EnemyChase : MonoBehaviour
         animator = GetComponent<Animator>();
         enemyCollider = GetComponent<Collider>();
         renderers = GetComponentsInChildren<Renderer>();
-        keyManager = FindFirstObjectByType<KeyFgmManager>();
-        // AudioSourceが未設定なら自動取得を試みる
+        keyManager = FindObjectOfType<KeyFgmManager>();
+
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
         }
 
-        // 初期位置を記録
+        // ▼ コードからAudioEchoFilterを制御・設定する処理
+        SetupEchoFilter();
+
         startPosition = transform.position;
 
         if (useSpawnCondition)
         {
-            // 出現条件付きの敵の場合、最初は非表示＆無効化して待機
             SetSpawnState(false);
             isSpawned = false;
         }
@@ -98,9 +106,38 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
+    // エコーフィルターをコードでセットアップするメソッド
+    private void SetupEchoFilter()
+    {
+        if (useEcho)
+        {
+            // 既にアタッチされていなければ追加する
+            echoFilter = GetComponent<AudioEchoFilter>();
+            if (echoFilter == null)
+            {
+                echoFilter = gameObject.AddComponent<AudioEchoFilter>();
+            }
+
+            // インスペクターで設定した数値をコードからフィルターに反映
+            echoFilter.delay = echoDelay;
+            echoFilter.decayRatio = echoDecayRatio;
+            echoFilter.dryMix = echoDryMix;
+            echoFilter.wetMix = echoWetMix;
+            echoFilter.enabled = true;
+        }
+        else
+        {
+            // エコーが無効に設定されている場合はコンポーネントがあれば無効化する
+            echoFilter = GetComponent<AudioEchoFilter>();
+            if (echoFilter != null)
+            {
+                echoFilter.enabled = false;
+            }
+        }
+    }
+
     void Update()
     {
-        // 出現条件付きの敵で、まだ出現していない場合
         if (useSpawnCondition && !isSpawned)
         {
             if (keyManager != null)
@@ -126,16 +163,11 @@ public class EnemyChase : MonoBehaviour
             if (playerObj != null)
             {
                 playerTransform = playerObj.transform;
-                // PlayerからHeartbeatControllerを取得
-                playerHeartbeat = playerObj.GetComponentInChildren<HeartbeatController>();
             }
         }
 
         float distanceToPlayer = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : float.MaxValue;
         bool canSeePlayer = (playerTransform != null) && HasLineOfSight(distanceToPlayer);
-
-        // 3段階の索敵範囲に応じてプレイヤーに心臓音の危険度を通知
-        UpdateHeartbeatNotification(distanceToPlayer);
 
         switch (currentState)
         {
@@ -156,26 +188,6 @@ public class EnemyChase : MonoBehaviour
         {
             bool isMoving = (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) && agent.velocity.magnitude > 0.1f;
             animator.SetBool("IsMoving", isMoving);
-        }
-    }
-
-    // ★追加：距離に応じて3段階の危険度を通知するメソッド
-    private void UpdateHeartbeatNotification(float distance)
-    {
-        // ★追加：攻撃中やロビー送還（テレポート）待ちの間は心臓音の通知を行わない
-        if (playerHeartbeat == null || isAttacking || isWaitingTeleport) return;
-
-        if (distance <= closeDetectionRange)
-        {
-            playerHeartbeat.NotifyDanger(DangerLevel.Stage3); // 至近距離（第3段階）
-        }
-        else if (distance <= detectionRange)
-        {
-            playerHeartbeat.NotifyDanger(DangerLevel.Stage2); // 発見距離（第2段階）
-        }
-        else if (distance <= loseTargetRange)
-        {
-            playerHeartbeat.NotifyDanger(DangerLevel.Stage1); // 見失う距離（第1段階）
         }
     }
 
@@ -268,12 +280,11 @@ public class EnemyChase : MonoBehaviour
 
     private void SetState(EnemyState newState)
     {
-        // ▼ 状態が「Chasing（追跡）」に新しく切り替わった瞬間のみSEを再生する
         if (newState == EnemyState.Chasing && currentState != EnemyState.Chasing)
         {
             if (audioSource != null && noticeSound != null)
             {
-                audioSource.PlayOneShot(noticeSound);
+                audioSource.PlayOneShot(noticeSound, noticeSoundVolume);
             }
         }
 
@@ -323,7 +334,6 @@ public class EnemyChase : MonoBehaviour
         return true;
     }
 
-    // --- 攻撃（被弾）処理 ---
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag(playerTag) && !isAttacking)
@@ -335,12 +345,6 @@ public class EnemyChase : MonoBehaviour
     private void StartAttack()
     {
         isAttacking = true;
-
-        // ★追加：プレイヤーにヒットした瞬間に心臓音を通常（停止）に戻す
-        if (playerHeartbeat != null)
-        {
-            playerHeartbeat.ResetHeartbeat();
-        }
 
         if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
@@ -363,7 +367,6 @@ public class EnemyChase : MonoBehaviour
 
         if (teleportOnHit)
         {
-            isWaitingTeleport = true; // ★追加：テレポート完了まで心臓音の通知を停止する
             Invoke(nameof(DelayedTeleport), teleportDelay);
         }
 
@@ -377,8 +380,6 @@ public class EnemyChase : MonoBehaviour
 
     private void TeleportToLobbyPosition()
     {
-        isWaitingTeleport = false; // ★追加：テレポート完了に伴いフラグを解除
-
         Vector3 targetPos = useStartPosAsLobby ? startPosition : customLobbyTeleportPos;
 
         if (agent != null && agent.isOnNavMesh)
@@ -388,12 +389,6 @@ public class EnemyChase : MonoBehaviour
         else
         {
             transform.position = targetPos;
-        }
-
-        // ★追加：ロビー送還（リスポーン）完了時にも心臓音を確実に通常へ戻す
-        if (playerHeartbeat != null)
-        {
-            playerHeartbeat.ResetHeartbeat();
         }
 
         SetState(EnemyState.Searching);

@@ -202,7 +202,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: runVolume
-      value: 0.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: jumpVolume
@@ -210,7 +210,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: walkVolume
-      value: 0.5
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 4184654544379862942, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: DownMaxPitch
@@ -2701,6 +2701,14 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      propertyPath: echoDryMix
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      propertyPath: echoWetMix
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: audioSource
       value: 
       objectReference: {fileID: 1328291616}
@@ -2713,8 +2721,16 @@ PrefabInstance:
       value: 45
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      propertyPath: echoDecayRatio
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: loseTargetRange
       value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      propertyPath: noticeSoundVolume
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: useSpawnCondition

@@ -56,6 +56,8 @@ public class HeartbeatController : MonoBehaviour
     // すべての敵のUpdate（通知）が終わった後に実行される
     void LateUpdate()
     {
+        Debug.Log($"現在の危険度: {maxDangerThisFrame}");
+
         UpdateHeartbeatSound(maxDangerThisFrame);
 
         // 次のフレームのために危険度をリセット
@@ -95,4 +97,6 @@ public class HeartbeatController : MonoBehaviour
                 break;
         }
     }
+
+
 }

@@ -16,6 +16,7 @@ public class EnemyChase : MonoBehaviour
     private NavMeshAgent agent;
     private Animator animator;
     private Transform playerTransform;
+    private HeartbeatController playerHeartbeat; // プレイヤー心臓SE制御用の参照
 
     [Header("ターゲット設定")]
     [SerializeField] private string playerTag = "Player";
@@ -44,15 +45,15 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private AudioSource audioSource;       // 音を鳴らすAudioSource
     [SerializeField] private AudioClip noticeSound;         // 敵に見つかった時のSE
     [Range(0f, 1f)][SerializeField] private float noticeSoundVolume = 1.0f; // SEの音量（0.0 〜 1.0）
-    [SerializeField] private float noticeSoundCooldown = 3.0f;               // 発見SEの連続再生を防ぐクールダウン時間（秒）
-    private float lastNoticeSoundTime = -999f;                               // 最後に発見SEを鳴らした時刻
+    [SerializeField] private float noticeSoundCooldown = 3.0f;                // 発見SEの連続再生を防ぐクールダウン時間（秒）
+    private float lastNoticeSoundTime = -999f;                                // 最後に発見SEを鳴らした時刻
 
     [Header("エコー設定（コード制御）")]
-    [SerializeField] private bool useEcho = true;                           // エコーを有効にするか
+    [SerializeField] private bool useEcho = true;                            // エコーを有効にするか
     [Range(10f, 5000f)][SerializeField] private float echoDelay = 500f;    // エコーの遅延時間（ミリ秒: 10 〜 5000）
     [Range(0f, 1f)][SerializeField] private float echoDecayRatio = 0.5f;   // エコーの減衰率（0.0 〜 1.0）
-    [Range(0f, 1f)][SerializeField] private float echoDryMix = 1f;         // 元の音の大きさ（0.0 〜 1.0）
-    [Range(0f, 1f)][SerializeField] private float echoWetMix = 0.5f;       // エコー音の大きさ（0.0 〜 1.0）
+    [Range(0f, 1f)][SerializeField] private float echoDryMix = 1f;          // 元の音の大きさ（0.0 〜 1.0）
+    [Range(0f, 1f)][SerializeField] private float echoWetMix = 0.5f;        // エコー音の大きさ（0.0 〜 1.0）
     private AudioEchoFilter echoFilter;                                     // エコーフィルターの参照用
 
     [Header("出現条件設定（追加の敵用）")]
@@ -74,6 +75,7 @@ public class EnemyChase : MonoBehaviour
     private float currentWaitDuration = 2f; // 今回立ち止まる目標時間
     private float waitTimer = 0f;
     private bool isAttacking = false;
+    private bool isWaitingTeleport = false; // テレポート完了までの待機フラグ
 
     void Start()
     {
@@ -165,11 +167,16 @@ public class EnemyChase : MonoBehaviour
             if (playerObj != null)
             {
                 playerTransform = playerObj.transform;
+                // PlayerからHeartbeatControllerを取得
+                playerHeartbeat = playerObj.GetComponentInChildren<HeartbeatController>();
             }
         }
 
         float distanceToPlayer = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : float.MaxValue;
         bool canSeePlayer = (playerTransform != null) && HasLineOfSight(distanceToPlayer);
+
+        // 3段階の索敵範囲に応じてプレイヤーに心臓音の危険度を通知
+        UpdateHeartbeatNotification(distanceToPlayer);
 
         switch (currentState)
         {
@@ -190,6 +197,25 @@ public class EnemyChase : MonoBehaviour
         {
             bool isMoving = (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) && agent.velocity.magnitude > 0.1f;
             animator.SetBool("IsMoving", isMoving);
+        }
+    }
+
+    // 距離に応じて3段階の危険度を通知するメソッド
+    private void UpdateHeartbeatNotification(float distance)
+    {
+        if (playerHeartbeat == null || isAttacking || isWaitingTeleport) return;
+
+        if (distance <= closeDetectionRange)
+        {
+            playerHeartbeat.NotifyDanger(DangerLevel.Stage3); // 至近距離（第3段階）
+        }
+        else if (distance <= detectionRange)
+        {
+            playerHeartbeat.NotifyDanger(DangerLevel.Stage2); // 発見距離（第2段階）
+        }
+        else if (distance <= loseTargetRange)
+        {
+            playerHeartbeat.NotifyDanger(DangerLevel.Stage1); // 見失う距離（第1段階）
         }
     }
 
@@ -353,6 +379,12 @@ public class EnemyChase : MonoBehaviour
     {
         isAttacking = true;
 
+        // 捕まった瞬間に心臓音を停止
+        if (playerHeartbeat != null)
+        {
+            playerHeartbeat.ResetHeartbeat();
+        }
+
         if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             agent.isStopped = true;
@@ -374,6 +406,7 @@ public class EnemyChase : MonoBehaviour
 
         if (teleportOnHit)
         {
+            isWaitingTeleport = true; // テレポート完了まで心臓音の通知を停止
             Invoke(nameof(DelayedTeleport), teleportDelay);
         }
 
@@ -387,6 +420,8 @@ public class EnemyChase : MonoBehaviour
 
     private void TeleportToLobbyPosition()
     {
+        isWaitingTeleport = false; // テレポート完了に伴いフラグ解除
+
         Vector3 targetPos = useStartPosAsLobby ? startPosition : customLobbyTeleportPos;
 
         if (agent != null && agent.isOnNavMesh)
@@ -396,6 +431,12 @@ public class EnemyChase : MonoBehaviour
         else
         {
             transform.position = targetPos;
+        }
+
+        // ロビー送還完了時にも心臓音を確実にリセット
+        if (playerHeartbeat != null)
+        {
+            playerHeartbeat.ResetHeartbeat();
         }
 
         SetState(EnemyState.Searching);

@@ -32,7 +32,7 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private AudioClip[] dieClips;          // 死亡SE
     [SerializeField] private AudioClip gameOverClip;        // 3回死亡時（ゲームオーバー時）のSE
 
-    // ★追加：敵に当たった時にプレイヤー（カメラ）が倒れ込む演出設定
+    // 敵に当たった時にプレイヤー（カメラ）が倒れ込む演出設定
     [Header("被弾時の転倒（倒れ込み）演出設定")]
     [SerializeField] private bool enableFallDownEffect = true;      // 倒れ込むカメラ演出を行うか
     [SerializeField] private Transform cameraTransform;             // 倒す対象のカメラ（未設定時はMainCameraを自動取得）
@@ -42,9 +42,9 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private float fallRollAngle = 65f;             // 倒れたときに首（カメラ）が横に傾く角度
     [SerializeField] private string fallTriggerName = "";           // Animatorで倒れるモーションを再生する場合のTrigger名（空欄ならスキップ）
 
-    private Vector3 defaultCamLocalPos;                             // ★追加：カメラの初期ローカル座標（リスポーン復帰用）
-    private Quaternion defaultCamLocalRot;                          // ★追加：カメラの初期ローカル回転（リスポーン復帰用）
-    private HeartbeatController heartbeatController;                // ★追加：心臓音リセット用の参照
+    private Vector3 defaultCamLocalPos;                             // カメラの初期ローカル座標（リスポーン復帰用）
+    private Quaternion defaultCamLocalRot;                          // カメラの初期ローカル回転（リスポーン復帰用）
+    private HeartbeatController heartbeatController;                // 心臓音リセット用の参照
 
     private int currentHits = 0;
     private bool isDead = false;
@@ -257,7 +257,7 @@ public class PlayerHealth : MonoBehaviour
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
 
-        // ★追加：倒れたカメラの位置と角度を元の高さ・向きに戻す
+        // 倒れたカメラの位置と角度を元の高さ・向きに戻す
         if (cameraTransform != null)
         {
             cameraTransform.localPosition = defaultCamLocalPos;

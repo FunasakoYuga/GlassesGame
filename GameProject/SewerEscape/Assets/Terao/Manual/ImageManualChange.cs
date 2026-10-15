@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.EventSystems; // UI‚Ì‘I‘ğó‘Ô‚ğ§Œä‚·‚é‚½‚ß‚É’Ç‰Á
+using UnityEngine.EventSystems; // UI‚Ì‘I‘ğó‘Ô‚ğ§Œä‚·‚é‚½‚ß‚É
+                                // 
 
 public class ImageManualChange : MonoBehaviour
 {

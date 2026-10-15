@@ -604,6 +604,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8100143384227547017, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8268666955364292630, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -2457,9 +2461,9 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 1
-  MaxDistance: 500
+  MaxDistance: 15
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -2493,7 +2497,7 @@ AudioSource:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
+      time: 0.07094383
       value: 0
       inSlope: 0
       outSlope: 0
@@ -2525,6 +2529,78 @@ AudioSource:
     - serializedVersion: 3
       time: 0
       value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!167 &1328291624
+AudioReverbZone:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1328291608}
+  m_Enabled: 1
+  m_MinDistance: 35
+  m_MaxDistance: 500
+  m_ReverbPreset: 1
+  m_Room: -1000
+  m_RoomHF: -100
+  m_DecayTime: 1.49
+  m_DecayHFRatio: 0.83
+  m_Reflections: -2602
+  m_ReflectionsDelay: 0.007
+  m_Reverb: 200
+  m_ReverbDelay: 0.011
+  m_HFReference: 5000
+  m_Diffusion: 100
+  m_Density: 100
+  m_LFReference: 250
+  m_RoomLF: 0
+--- !u!164 &1328291625
+AudioReverbFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1328291608}
+  m_Enabled: 1
+  m_DryLevel: 0
+  m_Room: -1000
+  m_RoomHF: -1000
+  m_DecayTime: 2.81
+  m_DecayHFRatio: 0.14
+  m_ReflectionsLevel: 429
+  m_ReverbLevel: 1023
+  m_ReverbDelay: 0.021
+  m_Diffusion: 80
+  m_Density: 60
+  m_HFReference: 5000
+  m_RoomLF: 0
+  m_LFReference: 250
+  m_ReflectionsDelay: 0
+  m_ReverbPreset: 22
+--- !u!169 &1328291626
+AudioLowPassFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1328291608}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_LowpassResonanceQ: 1
+  lowpassLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.20418371
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2705,12 +2781,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      propertyPath: useEcho
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      propertyPath: echoDelay
+      value: 250
+      objectReference: {fileID: 0}
+    - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: echoDryMix
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: echoWetMix
-      value: 0.3
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: audioSource
@@ -2726,7 +2810,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: echoDecayRatio
-      value: 0.4
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 8353497935366238630, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       propertyPath: loseTargetRange
@@ -2767,6 +2851,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7607224629619039663, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1328291616}
+    - targetCorrespondingSourceObject: {fileID: 7607224629619039663, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1328291626}
+    - targetCorrespondingSourceObject: {fileID: 7607224629619039663, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1328291625}
+    - targetCorrespondingSourceObject: {fileID: 7607224629619039663, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1328291624}
   m_SourcePrefab: {fileID: 100100000, guid: f8a084186dcd56140bf91b42226b5f12, type: 3}
 --- !u!1001 &1404923563
 PrefabInstance:

@@ -44,6 +44,8 @@ public class EnemyChase : MonoBehaviour
     [SerializeField] private AudioSource audioSource;       // 音を鳴らすAudioSource
     [SerializeField] private AudioClip noticeSound;         // 敵に見つかった時のSE
     [Range(0f, 1f)][SerializeField] private float noticeSoundVolume = 1.0f; // SEの音量（0.0 〜 1.0）
+    [SerializeField] private float noticeSoundCooldown = 3.0f;               // 発見SEの連続再生を防ぐクールダウン時間（秒）
+    private float lastNoticeSoundTime = -999f;                               // 最後に発見SEを鳴らした時刻
 
     [Header("エコー設定（コード制御）")]
     [SerializeField] private bool useEcho = true;                           // エコーを有効にするか
@@ -79,7 +81,7 @@ public class EnemyChase : MonoBehaviour
         animator = GetComponent<Animator>();
         enemyCollider = GetComponent<Collider>();
         renderers = GetComponentsInChildren<Renderer>();
-        keyManager = FindObjectOfType<KeyFgmManager>();
+        keyManager = FindAnyObjectByType<KeyFgmManager>();
 
         if (audioSource == null)
         {
@@ -282,9 +284,14 @@ public class EnemyChase : MonoBehaviour
     {
         if (newState == EnemyState.Chasing && currentState != EnemyState.Chasing)
         {
+            // クールダウン時間が経過している場合のみSEを鳴らす
             if (audioSource != null && noticeSound != null)
             {
-                audioSource.PlayOneShot(noticeSound, noticeSoundVolume);
+                if (Time.time >= lastNoticeSoundTime + noticeSoundCooldown)
+                {
+                    audioSource.PlayOneShot(noticeSound, noticeSoundVolume);
+                    lastNoticeSoundTime = Time.time;
+                }
             }
         }
 

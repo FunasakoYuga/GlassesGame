@@ -136,7 +136,7 @@ public class UIManager : MonoBehaviour
         m_currentItem = m_keymanager.GetKeyFgmNum();
         m_ItemText.text = m_currentItem.ToString();
 
-        if (m_keymanager.IsGameClear())
+        if (m_keymanager.IsClearReach())
         {
             m_objectiveText.text = "BACK TO THE PORTAL";
         }

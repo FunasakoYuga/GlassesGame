@@ -21,6 +21,7 @@ public class GoaLItem : MonoBehaviour
         if (other.gameObject.tag == "Player")
         {
             isExist = false;
+            Debug.Log("クリア！");
             Destroy(gameObject);
         }
     }
@@ -30,7 +31,7 @@ public class GoaLItem : MonoBehaviour
     /// </summary>
     /// <param name="isExist"></param>
     /// <returns>true:存在している　false:存在していない</returns>
-    bool GetIsExist(bool isExist)
+    public bool IsExist()
     {
         return isExist;
     }

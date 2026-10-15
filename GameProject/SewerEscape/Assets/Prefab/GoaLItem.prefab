@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7069790602159698712}
   - component: {fileID: 3381332874449498257}
   - component: {fileID: 1583023676669096305}
+  - component: {fileID: -4767302671915869374}
   m_Layer: 0
   m_Name: GoaLItem
   m_TagString: GoaLItem
@@ -125,3 +126,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3338adfe6cffb214590652589fb3c4ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoaLItem
+--- !u!114 &-4767302671915869374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7059065172823094848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 403e3a27c901f034b89dd5a4f59898f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoalTrigger

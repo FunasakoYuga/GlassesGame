@@ -12,22 +12,34 @@ public class GoaLItemGenerator : MonoBehaviour
     [SerializeField] Transform lobby;  // ゴールアイテムを生成するロビー(とりあえず一つ)
     KeyFgmManager keyManager;   // KeyFgmManager
 
+    // ゴールアイテムを生成したか
+    bool isGoalGenerate;
 
     [SerializeField] float height = 0.6f;   // 道の上に浮かせる高さ
-    
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         keyManager = GameObject.Find("KeyFgmManager").GetComponent<KeyFgmManager>();
-        Instantiate(goalitemPre, new Vector3(lobby.position.x, lobby.position.y + height, lobby.position.z), Quaternion.identity, transform);
+        isGoalGenerate = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(keyManager.GetKeyFgmNum() < 0)
+        // ゴールアイテムを生成してたらここで終わる
+        if (isGoalGenerate) return;
+
+        if (keyManager.IsClearReach())
         {
-            
+            PlaceGoal();
+            isGoalGenerate = true;
         }
+    }
+
+    // ゴールアイテムを生成
+    void PlaceGoal()
+    {
+        Instantiate(goalitemPre, new Vector3(lobby.position.x, lobby.position.y + height, lobby.position.z), Quaternion.identity, transform);
     }
 }

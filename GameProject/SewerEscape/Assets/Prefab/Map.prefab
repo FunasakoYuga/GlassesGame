@@ -2616,7 +2616,7 @@ Transform:
   m_GameObject: {fileID: 963003490642830527}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -71.9, y: -0.3, z: 32.04}
+  m_LocalPosition: {x: -71.9, y: -0.1, z: 32.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7902,6 +7902,7 @@ Transform:
   - {fileID: 211433379785764276}
   - {fileID: 1449048289135505184}
   - {fileID: 7245263677610382446}
+  - {fileID: 3873906669205463329}
   - {fileID: 1568496550370430769}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -19100,6 +19101,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3483376775732425155}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8159976338881291565
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3873906669205463329}
+  - component: {fileID: 4486876098281007393}
+  m_Layer: 0
+  m_Name: GoaLItemGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3873906669205463329
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8159976338881291565}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.96892, y: 0.60171, z: -103.87552}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8049720175111558810}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4486876098281007393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8159976338881291565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57467b6d5e2ac6b408206720179cdafa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoaLItemGenerator
+  goalitemPre: {fileID: 7059065172823094848, guid: 8da01e6ad5209f14f9a89637c8c9965b, type: 3}
+  lobby: {fileID: 875668828977873550}
+  height: 0.6
 --- !u!1 &8176595696810808236
 GameObject:
   m_ObjectHideFlags: 0

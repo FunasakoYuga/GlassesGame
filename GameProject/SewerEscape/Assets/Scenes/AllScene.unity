@@ -576,6 +576,10 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1200210501}
+    - target: {fileID: 4799529549748604057, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
+      propertyPath: m_playerHealth
+      value: 
+      objectReference: {fileID: 1828529297}
     - target: {fileID: 5130276136960290028, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -602,7 +606,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8268666955364292630, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9102729793604315530, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_LocalPosition.x

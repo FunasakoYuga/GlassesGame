@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: LiquidTransitonShader
+  m_Name: Clipping
   m_Shader: {fileID: -6465566751694194690, guid: b9ddf58a7fc921140ae07f1bf5fe1fb3, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -42,14 +42,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Cutoff: 1.2
+    - _Cutoff: 0
     - _QueueControl: 0
     - _QueueOffset: 0
     m_Colors:
-    - _LiquidColor: {r: 0, g: 0, b: 0, a: 1}
+    - _LiquidColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &2403986303658427168
+--- !u!114 &126691693836291978
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

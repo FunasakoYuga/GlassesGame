@@ -2,49 +2,70 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems; // コントローラーのボタン選択制御用に追加
+using UnityEngine.SceneManagement; // シーン遷移用に追加
 
 public class PlayerHealth : MonoBehaviour
 {
     [Header("耐久設定")]
-    [SerializeField] private int maxHits = 3;                       // 3回目で完全フェードアウト
+    [SerializeField] private int maxHits = 3;                            // 3回目で完全フェードアウト
 
     [Header("フェード演出設定")]
-    [SerializeField] private CanvasGroup fadeCanvasGroup;           // 画面を覆うパネル
-    [SerializeField] private float lookWaitTime = 2.0f;             // 視点を向けてから暗転するまでの待機時間（秒）
+    [SerializeField] private CanvasGroup fadeCanvasGroup;            // 画面を覆うパネル
+    [SerializeField] private float lookWaitTime = 2.0f;              // 視点を向けてから暗転するまでの待機時間（秒）
     [Range(1.0f, 4.0f)]
-    [SerializeField] private float fadeDuration = 1.5f;             // フェードイン / フェードアウト
-    [SerializeField] private float fadeInDuration = 3.0f;           // リスポーン時フェードイン時間（秒）
-    [SerializeField] private float blackScreenWaitTime = 0.3f;      // フェードの停止時間（秒）
+    [SerializeField] private float fadeDuration = 1.5f;              // フェードイン / フェードアウト
+    [SerializeField] private float fadeInDuration = 3.0f;            // リスポーン時フェードイン時間（秒）
+    [SerializeField] private float blackScreenWaitTime = 0.3f;       // フェードの停止時間（秒）
 
     [Header("ゲームオーバーUI設定")]
-    [SerializeField] private GameObject gameOverPanel;              // 暗転後に表示するゲームオーバーパネル
-    [SerializeField] private GameObject firstGameOverButton;        // 暗転後にコントローラーで最初に選択するボタン
+    [SerializeField] private GameObject gameOverPanel;               // 暗転後に表示するゲームオーバーパネル
+    [SerializeField] private GameObject firstGameOverButton;         // 暗転後にコントローラーで最初に選択するボタン
+
+    [Header("リザルトUI設定")]
+    [SerializeField] private GameObject resultPanel;                 // 【追加】表示するリザルトパネル
+    [SerializeField] private GameObject firstResultButton;           // 【追加】表示後にコントローラーで最初に選択するボタン
+    [SerializeField] private AudioSource resultAudioSource;          // 【追加】リザルト効果音を鳴らすAudioSource（未設定時はResultPanel内またはカメラ位置で再生）
+    [SerializeField] private AudioClip resultClip;                   // 【追加】ResultPanel表示時に鳴らす効果音（ジングル・クリアSE）
+
+    [Header("シーン遷移設定")]
+    [SerializeField] private string titleSceneName = "TitleScene";   // タイトルシーン名
 
     [Header("操作・視点設定")]
     [Tooltip("移動・視点操作を行っているPlayerMoveスクリプト")]
     [SerializeField] private PlayerMove playerMove;
 
     [Header("アニメーション・オーディオ設定")]
-    [SerializeField] private Animator playerAnimator;               // 停止させるアニメーター
-    [SerializeField] private AudioSource GameOveraudioSource;               // ゲームオーバーサウンド
+    [SerializeField] private Animator playerAnimator;                // 停止させるアニメーター
+    [SerializeField] private AudioSource GameOveraudioSource;                // ゲームオーバーサウンド
 
-    [SerializeField] private AudioSource[] playerAudioSources;      // 停止させるオーディオ
-    [SerializeField] private AudioClip[] dieClips;          // 死亡SE
-    [SerializeField] private AudioClip gameOverClip;        // 3回死亡時（ゲームオーバー時）のSE
+    [SerializeField] private AudioSource[] playerAudioSources;       // 停止させるオーディオ
+    [SerializeField] private AudioClip[] dieClips;           // 死亡SE
+    [SerializeField] private AudioClip gameOverClip;         // 3回死亡時（ゲームオーバー時）のSE
+
+    [Header("ゴール時オーディオ設定")]
+    [SerializeField] private AudioSource[] bugAudioSources;          // 【追加】ゴール時に音量を0にするbug（敵）のAudioSource（未設定時は自動検索）
 
     // 敵に当たった時にプレイヤー（カメラ）が倒れ込む演出設定
     [Header("被弾時の転倒（倒れ込み）演出設定")]
-    [SerializeField] private bool enableFallDownEffect = true;      // 倒れ込むカメラ演出を行うか
-    [SerializeField] private Transform cameraTransform;             // 倒す対象のカメラ（未設定時はMainCameraを自動取得）
-    [SerializeField] private float fallDelay = 0.4f;                // 敵の方を向いてから倒れ始めるまでの待ち時間（秒）
-    [SerializeField] private float fallDuration = 0.6f;             // 倒れ込むのにかかる時間（秒）
-    [SerializeField] private float fallDropHeight = 0.8f;           // 倒れたときに視点が下がる高さ（メートル）
-    [SerializeField] private float fallRollAngle = 65f;             // 倒れたときに首（カメラ）が横に傾く角度
-    [SerializeField] private string fallTriggerName = "";           // Animatorで倒れるモーションを再生する場合のTrigger名（空欄ならスキップ）
+    [SerializeField] private bool enableFallDownEffect = true;       // 倒れ込むカメラ演出を行うか
+    [SerializeField] private Transform cameraTransform;              // 倒す対象のカメラ（未設定時はMainCameraを自動取得）
+    [SerializeField] private float fallDelay = 0.4f;                 // 敵の方を向いてから倒れ始めるまでの待ち時間（秒）
+    [SerializeField] private float fallDuration = 0.6f;              // 倒れ込むのにかかる時間（秒）
+    [SerializeField] private float fallDropHeight = 0.8f;            // 倒れたときに視点が下がる高さ（メートル）
+    [SerializeField] private float fallRollAngle = 65f;              // 倒れたときに首（カメラ）が横に傾く角度
+    [SerializeField] private string fallTriggerName = "";            // Animatorで倒れるモーションを再生する場合のTrigger名（空欄ならスキップ）
 
-    private Vector3 defaultCamLocalPos;                             // カメラの初期ローカル座標（リスポーン復帰用）
-    private Quaternion defaultCamLocalRot;                          // カメラの初期ローカル回転（リスポーン復帰用）
-    private HeartbeatController heartbeatController;                // 心臓音リセット用の参照
+    // タイムスケール用定数（マジックナンバー回避）
+    private const float NormalTimeScale = 1.0f;                      // 通常のゲーム速度
+    private const float StoppedTimeScale = 0.0f;                     // 時間停止時のゲーム速度
+
+    // オーディオ音量用定数（マジックナンバー回避）
+    private const float MutedVolume = 0.0f;                          // ミュート時の音量
+    private const float DefaultResultVolume = 1.0f;                  // リザルト効果音の音量
+
+    private Vector3 defaultCamLocalPos;                              // カメラの初期ローカル座標（リスポーン復帰用）
+    private Quaternion defaultCamLocalRot;                           // カメラの初期ローカル回転（リスポーン復帰用）
+    private HeartbeatController heartbeatController;                 // 心臓音リセット用の参照
 
     private int currentHits = 0;
     private bool isDead = false;
@@ -60,6 +81,9 @@ public class PlayerHealth : MonoBehaviour
 
     private void Awake()
     {
+        // 前のシーンやリトライ前の停止状態（Time.timeScale = 0）を引き継がないよう、開始時に通常速度へリセット
+        Time.timeScale = NormalTimeScale;
+
         spawnPosition = transform.position;
         spawnRotation = transform.rotation;
         characterController = GetComponent<CharacterController>();
@@ -108,6 +132,18 @@ public class PlayerHealth : MonoBehaviour
         {
             gameOverPanel.SetActive(false);
         }
+
+        // 開始時はリザルトパネルを非表示にしておく
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(false);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // シーン遷移やオブジェクト破棄時に時間停止が残らないよう安全に戻す
+        Time.timeScale = NormalTimeScale;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -125,6 +161,13 @@ public class PlayerHealth : MonoBehaviour
         // リスポーンか死亡か
         if (isDead || isRespawning) return;
 
+        // 【追加】GoalItemタグを持つオブジェクトに接触した場合
+        if (target.CompareTag("GoaLItem") || target.transform.root.CompareTag("GoaLItem"))
+        {
+            HandleGoal(target);
+            return;
+        }
+
         // Enemyタグを持つオブジェクトに接触したら被弾or死亡
         if (target.CompareTag("Enemy") || target.transform.root.CompareTag("Enemy"))
         {
@@ -132,7 +175,265 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    // 被弾処理
+    // 【追加】ゴール（GoalItem接触時）の処理
+    private void HandleGoal(GameObject target)
+    {
+        isDead = true; // 以降の被弾やリスポーン判定を無効化
+
+        // ResultPanelを表示し、時間停止と音の停止を実行
+        ShowResultPanel();
+    }
+
+    /// <summary>
+    /// 【追加】ResultPanelを表示し、音を消してゲーム内の時間を停止する処理
+    /// </summary>
+    public void ShowResultPanel()
+    {
+        // 1. 時間は止めず、PlayerMoveを無効化
+        if (playerMove != null)
+        {
+            playerMove.enabled = false;
+        }
+        SetPlayerInput(false);
+
+        // 2. プレイヤーのアニメーションを停止
+        if (playerAnimator != null)
+        {
+            playerAnimator.speed = 0f;
+        }
+
+        // 3. PlayerのAudioの音量を0にする（※ResultPanel内のオーディオは除外して保護）
+        MutePlayerAudio();
+
+        // 4. bugのAudioの音量を0にする（※ResultPanel内のオーディオは除外して保護）
+        MuteBugAudio();
+
+        // 5. 心臓音も完全に停止・リセット
+        if (heartbeatController != null)
+        {
+            heartbeatController.ResetHeartbeat();
+            heartbeatController.enabled = false;
+        }
+
+        // 6. シーン内にあるポーズ関連のスクリプトを無効化してポーズ入力を完全停止
+        MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        foreach (var script in allScripts)
+        {
+            if (script != null)
+            {
+                string scriptName = script.GetType().Name;
+                if (scriptName.Contains("Pause") || scriptName.Contains("GameManager"))
+                {
+                    script.enabled = false;
+                }
+            }
+        }
+
+        // 7. ResultPanelを表示（時間は止めていないため通常通りアニメーションや演出が動きます）
+        if (resultPanel != null)
+        {
+            EnableUnscaledTimeForUI(resultPanel);
+
+            resultPanel.SetActive(true);
+
+            // コントローラー用にリザルトパネルの最初のボタンを選択状態にする
+            if (firstResultButton != null && EventSystem.current != null)
+            {
+                StartCoroutine(SetSelectedGameOverButton(firstResultButton));
+            }
+        }
+
+        // 8. 【追加】ResultPanel表示時の効果音（ジングルSE）を再生
+        PlayResultSound();
+
+        // 9. ボタン操作のためにマウスカーソルを表示・解放
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        Debug.Log("ResultPanelを表示しました。PlayerMoveを無効化し、PlayerおよびbugのAudio音量を0に設定しました。");
+    }
+
+    /// <summary>
+    /// 【追加】ResultPanel表示時の効果音（ジングルSE）を再生する
+    /// </summary>
+    private void PlayResultSound()
+    {
+        if (resultClip == null) return;
+
+        // 専用のresultAudioSourceが指定されていればそれを使用
+        AudioSource targetSource = resultAudioSource;
+
+        // 未設定でResultPanel配下にAudioSourceがあればそれを優先使用
+        if (targetSource == null && resultPanel != null)
+        {
+            targetSource = resultPanel.GetComponentInChildren<AudioSource>();
+        }
+
+        if (targetSource != null)
+        {
+            targetSource.volume = DefaultResultVolume;
+            targetSource.PlayOneShot(resultClip, DefaultResultVolume);
+        }
+        else
+        {
+            // AudioSourceがない場合はカメラ位置で直接再生
+            Vector3 playPos = Camera.main != null ? Camera.main.transform.position : transform.position;
+            AudioSource.PlayClipAtPoint(resultClip, playPos, DefaultResultVolume);
+        }
+    }
+
+    /// <summary>
+    /// 【追加】PlayerのAudioSourceの音量を0にする
+    /// </summary>
+    private void MutePlayerAudio()
+    {
+        if (playerAudioSources != null)
+        {
+            foreach (AudioSource audio in playerAudioSources)
+            {
+                if (audio != null)
+                {
+                    // ResultPanel配下の音源やリザルト専用AudioSourceはミュート対象から除外して保護
+                    if (resultAudioSource != null && audio == resultAudioSource) continue;
+                    if (resultPanel != null && audio.transform.IsChildOf(resultPanel.transform)) continue;
+
+                    audio.volume = MutedVolume;
+                    audio.Stop();
+                }
+            }
+        }
+
+        AudioSource[] selfAudios = GetComponentsInChildren<AudioSource>();
+        foreach (AudioSource audio in selfAudios)
+        {
+            if (audio != null)
+            {
+                // ResultPanel配下の音源やリザルト専用AudioSourceはミュート対象から除外して保護
+                if (resultAudioSource != null && audio == resultAudioSource) continue;
+                if (resultPanel != null && audio.transform.IsChildOf(resultPanel.transform)) continue;
+
+                audio.volume = MutedVolume;
+                audio.Stop();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 【追加】bug（敵）のAudioSourceの音量を0にする
+    /// </summary>
+    private void MuteBugAudio()
+    {
+        // インスペクターで明示的に登録されている場合
+        if (bugAudioSources != null && bugAudioSources.Length > 0)
+        {
+            foreach (AudioSource audio in bugAudioSources)
+            {
+                if (audio != null)
+                {
+                    // ResultPanel配下の音源やリザルト専用AudioSourceはミュート対象から除外して保護
+                    if (resultAudioSource != null && audio == resultAudioSource) continue;
+                    if (resultPanel != null && audio.transform.IsChildOf(resultPanel.transform)) continue;
+
+                    audio.volume = MutedVolume;
+                    audio.Stop();
+                }
+            }
+            return;
+        }
+
+        // 未登録の場合はEnemyタグやオブジェクト名からbugのAudioSourceを自動検索してミュート
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy != null)
+            {
+                AudioSource[] enemyAudios = enemy.GetComponentsInChildren<AudioSource>();
+                foreach (AudioSource audio in enemyAudios)
+                {
+                    if (audio != null)
+                    {
+                        if (resultAudioSource != null && audio == resultAudioSource) continue;
+                        if (resultPanel != null && audio.transform.IsChildOf(resultPanel.transform)) continue;
+
+                        audio.volume = MutedVolume;
+                        audio.Stop();
+                    }
+                }
+            }
+        }
+
+        // オブジェクト名に"bug"が含まれるAudioSourceも検索して音量を0にする
+        AudioSource[] allAudioSources = FindObjectsByType<AudioSource>(FindObjectsSortMode.None);
+        foreach (AudioSource audio in allAudioSources)
+        {
+            if (audio != null)
+            {
+                // ResultPanel配下の音源やリザルト専用AudioSourceはミュート対象から除外して保護
+                if (resultAudioSource != null && audio == resultAudioSource) continue;
+                if (resultPanel != null && audio.transform.IsChildOf(resultPanel.transform)) continue;
+
+                string objName = audio.gameObject.name.ToLower();
+                string rootName = audio.transform.root != null ? audio.transform.root.name.ToLower() : "";
+
+                if (objName.Contains("bug") || rootName.Contains("bug"))
+                {
+                    audio.volume = MutedVolume;
+                    audio.Stop();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 【追加】UI演出（AnimatorやParticleSystem）がTime.timeScale = 0でも停止しないようUnscaledTimeに設定する
+    /// </summary>
+    private void EnableUnscaledTimeForUI(GameObject targetPanel)
+    {
+        if (targetPanel == null) return;
+
+        // UIに付いているすべてのAnimatorをUnscaledTime（実時間連動）に切り替え
+        Animator[] animators = targetPanel.GetComponentsInChildren<Animator>(true);
+        foreach (var anim in animators)
+        {
+            if (anim != null)
+            {
+                anim.updateMode = AnimatorUpdateMode.UnscaledTime;
+            }
+        }
+
+        // UIにパーティクル等が付いている場合も実時間で再生
+        ParticleSystem[] particles = targetPanel.GetComponentsInChildren<ParticleSystem>(true);
+        foreach (var ps in particles)
+        {
+            if (ps != null)
+            {
+                var main = ps.main;
+                main.useUnscaledTime = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 【追加】シーン内のゲームオーディオ（敵の音や環境音など）を一括停止する
+    /// （ResultPanel自身に付いているクリアジングルやUI用AudioSourceは止めないように保護）
+    /// </summary>
+    private void StopAllGameAudio()
+    {
+        AudioSource[] allAudioSources = FindObjectsByType<AudioSource>(FindObjectsSortMode.None);
+        foreach (var audio in allAudioSources)
+        {
+            if (audio == null) continue;
+
+            // ResultPanel内にあるAudioSource（リザルト画面のSEやBGM）は停止対象外にする
+            if (resultPanel != null && audio.transform.IsChildOf(resultPanel.transform))
+            {
+                continue;
+            }
+
+            audio.Stop();
+        }
+    }
+
     // 被弾処理
     private void HandleHit(GameObject target)
     {
@@ -396,6 +697,27 @@ public class PlayerHealth : MonoBehaviour
             EventSystem.current.SetSelectedGameObject(null);
             EventSystem.current.SetSelectedGameObject(target);
         }
+    }
+
+    /// <summary>
+    /// 【追加】UIボタン等から呼び出すリトライ処理
+    /// </summary>
+    public void Retry()
+    {
+        // 停止した時間を通常速度に戻してからシーンを再読み込み
+        Time.timeScale = NormalTimeScale;
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(currentSceneName);
+    }
+
+    /// <summary>
+    /// 【追加】UIボタン等から呼び出すタイトル画面遷移処理
+    /// </summary>
+    public void BackToTitle()
+    {
+        // 停止した時間を通常速度に戻してからタイトルシーンを読み込み
+        Time.timeScale = NormalTimeScale;
+        SceneManager.LoadScene(titleSceneName);
     }
 
     /// <summary>

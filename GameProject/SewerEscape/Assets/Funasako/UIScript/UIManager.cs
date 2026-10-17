@@ -29,10 +29,15 @@ public class UIManager : MonoBehaviour
 
     // リザルト
     [SerializeField] private GameObject m_resultPanel;
+    [SerializeField] private TextMeshProUGUI m_timeText;
     [SerializeField] private TextMeshProUGUI m_timeScoreText;
+    [SerializeField] private TextMeshProUGUI m_resultItemText;
     [SerializeField] private TextMeshProUGUI m_itemScoreText;
+    [SerializeField] private TextMeshProUGUI m_resultLifeText;
     [SerializeField] private TextMeshProUGUI m_lostLifeText;
+    [SerializeField] private TextMeshProUGUI m_ScoreText;
     [SerializeField] private TextMeshProUGUI m_totalScoreText;
+    [SerializeField] private TextMeshProUGUI m_RankText;
     [SerializeField] private TextMeshProUGUI m_finalRankText;
     [SerializeField] private GameObject m_button;
 
@@ -45,6 +50,7 @@ public class UIManager : MonoBehaviour
     private int m_currentLives = 3;
     private int m_currentHits = 0;
     private float m_passedTime = 0.0f;
+    private float m_transitionDelay = 1.0f;
     private float m_scoreDelayTime = 0.5f;
     private float m_rankDelayTime = 1.0f;
     private bool m_isGameActive = false;
@@ -53,11 +59,15 @@ public class UIManager : MonoBehaviour
     [SerializeField] private KeyFgmManager m_keymanager;
     //    [SerializeField] private PlayerHealth m_playerHealth;
     PlayerHealth m_playerHealth;
+    LiquidTransition m_transition;
 
 
     public AudioSource m_audioSource;
     public AudioClip m_scoreSe;
     public AudioClip m_rankSe;
+    public AudioClip m_panelSe;
+    public AudioClip m_tlansSe;
+    public AudioClip m_bgm;
 
     // リフレクション
     private FieldInfo m_hitsField;
@@ -71,6 +81,7 @@ public class UIManager : MonoBehaviour
         isTransitioning = false;
 
         m_playerHealth = FindAnyObjectByType<PlayerHealth>();
+        m_transition=GetComponent<LiquidTransition>();
 
         // フェードパネルの初期化（透明・クリック透過）
         if (fadeCanvasGroup != null)
@@ -151,81 +162,45 @@ public class UIManager : MonoBehaviour
         if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
     }
 
-    // ゲーム開始時のUI初期化
-    //public void SetUpGameUI(int totalItem, int startLives)
-    //{
-    //    m_maxItem = totalItem;
-    //    m_currentItem = 0;
-    //    m_maxLivesMemo = startLives;
-    //    m_currentHits = startLives;
-    //    m_passedTime = 0;
-    //    m_isGameActive = true;
-
-    //    m_hudPanel.SetActive(true);
-    //    m_resultPanel.SetActive(false);
-    //    if (m_gameOverPanel != null) m_gameOverPanel.SetActive(false);
-
-    //    UpdateHUD();
-    //    if (m_objectiveText != null) m_objectiveText.text = "COLLECT ALL ITEM";
-    //}
-
-    // HUD更新
-    //private void UpdateHUD()
-    //{
-    //    int remaining = m_maxItem - m_currentItem;
-    //    if (m_ItemText != null) m_ItemText.text = remaining.ToString();
-    //    if (m_lifeText != null) m_lifeText.text = "LIVES:" + m_currentHits.ToString();
-    //}
-
-    //public void OnItemCollected()
-    //{
-    //    if (!m_isGameActive) return;
-
-    //    if (m_currentItem != m_maxItem)
-    //    {
-    //        m_currentItem++;
-
-    //    }
-    //    if (m_currentItem >= m_maxItem)
-    //    {
-    //        m_currentItem = m_maxItem;
-    //        if (m_objectiveText != null) m_objectiveText.text = "GET BACK TO THE PORTAL";
-    //    }
-    //    UpdateHUD();
-    //}
-
-    //public void OnPlayerDamaged()
-    //{
-    //    Debug.Log("call");
-
-    //    if (!m_isGameActive) return;
-
-    //    m_currentHits--;
-    //    UpdateHUD();
-    //    Debug.Log("damage");
-
-    //    if (m_currentHits <= 0)
-    //    {
-    //        ShowGameOverUI();
-    //    }
-    //}
 
     public void ShowResultUI()
     {
+
+        m_timeText.gameObject.SetActive(false);
+        m_timeScoreText.gameObject.SetActive(false);
+        m_resultItemText.gameObject.SetActive(false);
+        m_itemScoreText.gameObject.SetActive(false);
+        m_resultLifeText.gameObject.SetActive(false);
+        m_lostLifeText.gameObject.SetActive(false);
+        m_ScoreText.gameObject.SetActive(false);
+        m_totalScoreText.gameObject.SetActive(false);
+        m_RankText.gameObject.SetActive(false);
+        m_finalRankText.gameObject.SetActive(false);
+        m_button.SetActive(false);
         m_isGameActive = false;
         m_hudPanel.SetActive(false);
         m_resultPanel.SetActive(true);
+        StartCoroutine(ShowEscapePanel());
 
-        m_timeScoreText.gameObject.SetActive(false);
-        m_itemScoreText.gameObject.SetActive(false);
-        m_lostLifeText.gameObject.SetActive(false);
-        m_totalScoreText.gameObject.SetActive(false);
-        m_finalRankText.gameObject.SetActive(false);
-        m_button.SetActive(false);
+    }
+
+    private IEnumerator ShowEscapePanel()
+    {
+        PlaySound(m_panelSe);
+        yield return new WaitForSeconds(1.5f);
+        StartCoroutine(ShowScore());
+    }
+    private IEnumerator ShowScore()
+    {
+        m_transition.StartLiquidTransition();
+        PlaySound(m_tlansSe);
+
+        yield return new WaitForSeconds(m_transitionDelay);
 
         StartCoroutine(ShowResultSequence());
 
         UnlockCursur();
+        yield return null;
     }
 
     private IEnumerator ShowResultSequence()
@@ -235,29 +210,39 @@ public class UIManager : MonoBehaviour
         int minites = Mathf.FloorToInt(m_passedTime / 60F);
         int seconds = Mathf.FloorToInt(m_passedTime % 60F);
         m_timeScoreText.text = $"{minites:00}:{seconds:00}";
+        m_timeText.gameObject.SetActive (true);
         m_timeScoreText.gameObject.SetActive(true);
-        PlaySESound(m_scoreSe);
+        m_audioSource.Stop();
+        PlaySound(m_scoreSe);
 
 
         yield return new WaitForSeconds(m_scoreDelayTime);
 
         m_itemScoreText.text = (m_maxItem - m_currentItem).ToString();
+        m_resultItemText.gameObject.SetActive (true);
         m_itemScoreText.gameObject.SetActive(true);
-        PlaySESound(m_scoreSe);
+        PlaySound(m_scoreSe);
 
         yield return new WaitForSeconds(m_scoreDelayTime);
 
         int lostLife = m_maxLivesMemo - m_currentHits;
         m_lostLifeText.text = lostLife.ToString();
+        m_resultLifeText.gameObject.SetActive (true);
         m_lostLifeText.gameObject.SetActive(true);
-        PlaySESound(m_scoreSe);
+        PlaySound(m_scoreSe);
 
         yield return new WaitForSeconds(m_scoreDelayTime);
 
         int totalScore = (m_currentItem * 10) + (m_currentHits * 50);
         m_totalScoreText.text = totalScore.ToString();
+        m_ScoreText.gameObject.SetActive (true);
         m_totalScoreText.gameObject.SetActive(true);
-        PlaySESound(m_scoreSe);
+        PlaySound(m_scoreSe);
+
+        yield return new WaitForSeconds (m_scoreDelayTime);
+
+        m_RankText.gameObject.SetActive (true);
+        PlaySound (m_scoreSe);
 
         yield return new WaitForSeconds(m_rankDelayTime);
 
@@ -267,7 +252,7 @@ public class UIManager : MonoBehaviour
         else if (lostLife == 2) rank = "B";
         m_finalRankText.text = rank.ToString();
         m_finalRankText.gameObject.SetActive(true);
-        PlaySESound(m_rankSe);
+        PlaySound(m_rankSe);
 
         yield return new WaitForSeconds(m_rankDelayTime);
 
@@ -280,14 +265,18 @@ public class UIManager : MonoBehaviour
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(resultBtn.gameObject);
         }
 
-        
+        yield return new WaitForSeconds (m_scoreDelayTime);
+        m_audioSource.Stop();
+        PlaySound(m_bgm);
 
     }
 
-    private void PlaySESound(AudioClip se)
+    private void PlaySound(AudioClip se)
     {
         m_audioSource.PlayOneShot(se);
     }
+
+   
 
     //public void ShowGameOverUI()
     //{

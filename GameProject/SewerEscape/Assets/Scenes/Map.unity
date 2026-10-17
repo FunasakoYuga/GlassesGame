@@ -1242,7 +1242,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6477386155965868262, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: isClearReach
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9102729793604315530, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1324,29 +1324,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 211433379785764276, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 875668828977873550, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1449048289135505184, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.3
-      objectReference: {fileID: 0}
     - target: {fileID: 3121127997549271833, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
       propertyPath: m_Name
       value: Map
-      objectReference: {fileID: 0}
-    - target: {fileID: 4486876098281007393, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
-      propertyPath: goalitemPre
-      value: 
-      objectReference: {fileID: 4510877070703279910, guid: 976c2ce6631431440afdf578ca886d85, type: 3}
-    - target: {fileID: 7921539613647145071, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.3
       objectReference: {fileID: 0}
     - target: {fileID: 8049720175111558810, guid: e9dec682b7cdcb347b23ba8c3cb5accc, type: 3}
       propertyPath: m_LocalPosition.x

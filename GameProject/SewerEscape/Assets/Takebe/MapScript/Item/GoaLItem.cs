@@ -22,7 +22,7 @@ public class GoaLItem : MonoBehaviour
         {
             isExist = false;
             Debug.Log("クリア！");
-            Destroy(gameObject);
+        //    Destroy(gameObject);
         }
     }
 

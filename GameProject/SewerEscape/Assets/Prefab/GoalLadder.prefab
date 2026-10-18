@@ -12,9 +12,6 @@ GameObject:
   - component: {fileID: 8113931236117051416}
   - component: {fileID: 1833758102236032032}
   - component: {fileID: 2069125963049814959}
-  - component: {fileID: 5253522507387638579}
-  - component: {fileID: 8959749737048183548}
-  - component: {fileID: 5430698391365542074}
   m_Layer: 0
   m_Name: GoalLadder (1)
   m_TagString: GoaLItem
@@ -111,56 +108,11 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2534964839176971238, guid: 0a7a4e4588e3e3a4b811fe7c5d6426cc, type: 3}
---- !u!114 &5253522507387638579
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 315483256844618353}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 403e3a27c901f034b89dd5a4f59898f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoalTrigger
---- !u!114 &8959749737048183548
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 315483256844618353}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3338adfe6cffb214590652589fb3c4ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoaLItem
---- !u!65 &5430698391365542074
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 315483256844618353}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2473959710590385547
 GameObject:
   m_ObjectHideFlags: 0

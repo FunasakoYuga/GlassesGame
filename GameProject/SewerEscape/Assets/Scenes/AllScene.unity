@@ -261,6 +261,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 379942616}
     - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      propertyPath: ladderFrontOffset
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4374232371068724811, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       propertyPath: resultAudioSource
       value: 
       objectReference: {fileID: 1346486137}

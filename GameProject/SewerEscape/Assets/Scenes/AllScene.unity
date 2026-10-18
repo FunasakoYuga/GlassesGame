@@ -310,7 +310,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 2140458389511962316, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 935648064}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1657253452615328886, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
       insertIndex: 5
@@ -661,6 +664,10 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1200210501}
+    - target: {fileID: 6477386155965868262, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
+      propertyPath: isClearReach
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7411744120793714177, guid: 2b399e7e9a9d6c945890dfc6980f8f7c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -2293,12 +2300,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 935648062}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.55377, y: 1.50467, z: 120.37355}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.46159264, y: 0.102692835, z: -7.8617525}
+  m_LocalScale: {x: 0.7142857, y: 0.7142857, z: 0.7142857}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1828529303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &941593711 stripped
 GameObject:
@@ -2839,7 +2846,7 @@ AudioLowPassFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1328291608}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_LowpassResonanceQ: 1
   lowpassLevelCustomCurve:
@@ -4174,6 +4181,11 @@ MonoBehaviour:
   NearPitch: 2.3
   MiddlePitch: 1.5
   FarPitch: 0.8
+--- !u!4 &1828529303 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2140458389511962316, guid: 5e64bdf1ed7542047918d620aa569534, type: 3}
+  m_PrefabInstance: {fileID: 7754849}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1829987493 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4011077083501845521, guid: 5fe6194b562581343b266bb252a5bf9a, type: 3}
@@ -4812,4 +4824,3 @@ SceneRoots:
   - {fileID: 247498493}
   - {fileID: 8560249}
   - {fileID: 1200210500}
-  - {fileID: 935648064}

@@ -43,7 +43,13 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private AudioClip gameOverClip;         // 3回死亡時（ゲームオーバー時）のSE
 
     [Header("ゴール時オーディオ設定")]
-    [SerializeField] private AudioSource[] bugAudioSources;          // 【追加】ゴール時に音量を0にするbug（敵）のAudioSource（未設定時は自動検索）
+    [SerializeField] private AudioSource[] bugAudioSources;          // ゴール時に音量を0にするbug（敵）のAudioSource（未設定時は自動検索）
+
+    [Header("ゴール（梯子上昇）演出設定")]
+    [SerializeField] private float goalClimbDuration = 2.0f;          // 【追加】上昇演出および完全暗転までの時間（秒）
+    [SerializeField] private float climbSpeed = 2.5f;                // 【追加】梯子を上る上昇速度（m/s）
+    [SerializeField] private float goalFadeDuration = 1.0f;           // 【追加】暗転（フェードアウト）にかける時間（秒）
+    [SerializeField] private float climbRotateSpeed = 8.0f;          // 【追加】梯子の向き（0度または180度）へ体を合わせる回転補間速度
 
     // 敵に当たった時にプレイヤー（カメラ）が倒れ込む演出設定
     [Header("被弾時の転倒（倒れ込み）演出設定")]
@@ -62,6 +68,13 @@ public class PlayerHealth : MonoBehaviour
     // オーディオ音量用定数（マジックナンバー回避）
     private const float MutedVolume = 0.0f;                          // ミュート時の音量
     private const float DefaultResultVolume = 1.0f;                  // リザルト効果音の音量
+
+    // フェード演出用定数（マジックナンバー回避）
+    private const float FadeAlphaClear = 0.0f;                       // 完全透明時のアルファ値
+    private const float FadeAlphaBlack = 1.0f;                       // 完全暗転時のアルファ値
+
+    // 梯子演出用定数（マジックナンバー回避）
+    private const float HalfTurnAngle = 180.0f;                      // 梯子の反対向き（180度反転）角度
 
     private Vector3 defaultCamLocalPos;                              // カメラの初期ローカル座標（リスポーン復帰用）
     private Quaternion defaultCamLocalRot;                           // カメラの初期ローカル回転（リスポーン復帰用）
@@ -94,6 +107,14 @@ public class PlayerHealth : MonoBehaviour
         if (playerMove == null)
         {
             playerMove = GetComponent<PlayerMove>();
+            if (playerMove == null)
+            {
+                playerMove = GetComponentInParent<PlayerMove>();
+            }
+            if (playerMove == null)
+            {
+                playerMove = GetComponentInChildren<PlayerMove>();
+            }
         }
 
         // Animatorが未設定なら自身または子オブジェクトから取得
@@ -180,7 +201,88 @@ public class PlayerHealth : MonoBehaviour
     {
         isDead = true; // 以降の被弾やリスポーン判定を無効化
 
-        // ResultPanelを表示し、時間停止と音の停止を実行
+        // 梯子を上る上昇演出とフェードアウトを開始
+        StartCoroutine(GoalClimbRoutine(target));
+    }
+
+    /// <summary>
+    /// 【追加】梯子を上るようにプレイヤーを上昇させ、2秒後に完全フェードアウトしてResultPanelを表示するコルーチン
+    /// </summary>
+    private IEnumerator GoalClimbRoutine(GameObject goalTarget)
+    {
+        // 1. 移動・視点入力を即座に遮断
+        SetPlayerInput(false);
+
+        // 2. 物理移動・落下の干渉を防ぐためCharacterControllerを一時無効化
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        // 3. 心臓音を完全に停止・リセット
+        if (heartbeatController != null)
+        {
+            heartbeatController.ResetHeartbeat();
+            heartbeatController.enabled = false;
+        }
+
+        // GoalItemのY軸回転を基準に、0度または180度のうちプレイヤーの現在向きに近い目標回転を決定
+        float goalY = (goalTarget != null) ? goalTarget.transform.eulerAngles.y : transform.eulerAngles.y;
+        Quaternion rot0 = Quaternion.Euler(0f, goalY, 0f);
+        Quaternion rot180 = Quaternion.Euler(0f, goalY + HalfTurnAngle, 0f);
+        Quaternion targetRotation = (Quaternion.Angle(transform.rotation, rot0) <= Quaternion.Angle(transform.rotation, rot180)) ? rot0 : rot180;
+
+        // 2秒後にちょうど完全暗転するようにフェード開始タイミングを算出
+        float fadeStartTime = Mathf.Max(0f, goalClimbDuration - goalFadeDuration);
+        bool fadeStarted = false;
+
+        float timer = 0f;
+        while (timer < goalClimbDuration)
+        {
+            float dt = Time.deltaTime;
+            timer += dt;
+
+            // 梯子の向き（0度または180度）へスムーズに体を向ける
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, climbRotateSpeed * dt);
+
+            // カメラの傾きも正面（初期ローカル回転）へ戻す
+            if (cameraTransform != null)
+            {
+                cameraTransform.localRotation = Quaternion.Slerp(cameraTransform.localRotation, defaultCamLocalRot, climbRotateSpeed * dt);
+            }
+
+            // 梯子を上るように上方向へ移動
+            transform.position += Vector3.up * (climbSpeed * dt);
+
+            // フェードアウト開始タイミングになったら暗転を開始
+            if (!fadeStarted && timer >= fadeStartTime)
+            {
+                fadeStarted = true;
+                if (fadeCanvasGroup != null)
+                {
+                    fadeCanvasGroup.blocksRaycasts = true;
+                    StartCoroutine(Fade(FadeAlphaClear, FadeAlphaBlack, goalFadeDuration));
+                }
+            }
+
+            yield return null;
+        }
+
+        // 最終的な向きを確実に目標角度に固定
+        transform.rotation = targetRotation;
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = defaultCamLocalRot;
+        }
+
+        // 確実に画面を真っ黒で固定
+        if (fadeCanvasGroup != null)
+        {
+            fadeCanvasGroup.alpha = FadeAlphaBlack;
+            fadeCanvasGroup.blocksRaycasts = true;
+        }
+
+        // 2秒後（上昇演出および暗転完了後）にResultPanelを表示
         ShowResultPanel();
     }
 
@@ -189,12 +291,14 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void ShowResultPanel()
     {
-        // 1. 時間は止めず、PlayerMoveを無効化
-        if (playerMove != null)
-        {
-            playerMove.enabled = false;
-        }
+        // 1. 時間は止めず、プレイヤー入力・移動を完全に遮断
         SetPlayerInput(false);
+
+        // CharacterControllerを無効化して物理移動・落下を完全停止
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
 
         // 2. プレイヤーのアニメーションを停止
         if (playerAnimator != null)
@@ -202,11 +306,11 @@ public class PlayerHealth : MonoBehaviour
             playerAnimator.speed = 0f;
         }
 
-        // 3. PlayerのAudioの音量を0にする（※ResultPanel内のオーディオは除外して保護）
+        // 3. PlayerのAudioの音量を0にし、AudioSourceコンポーネントをOFFにする（※ResultPanel内のオーディオは除外して保護）
         MutePlayerAudio();
 
-        // 4. bugのAudioの音量を0にする（※ResultPanel内のオーディオは除外して保護）
-        MuteBugAudio();
+        // 4. bugのAudioは停止せずそのまま鳴らしておくため呼び出しをスキップ
+        // MuteBugAudio();
 
         // 5. 心臓音も完全に停止・リセット
         if (heartbeatController != null)
@@ -250,7 +354,7 @@ public class PlayerHealth : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        Debug.Log("ResultPanelを表示しました。PlayerMoveを無効化し、PlayerおよびbugのAudio音量を0に設定しました。");
+        Debug.Log("ResultPanelを表示しました。PlayerMoveを無効化し、PlayerのAudioSourceをOFFに設定しました。");
     }
 
     /// <summary>
@@ -283,7 +387,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】PlayerのAudioSourceの音量を0にする
+    /// 【追加】PlayerのAudioSourceの音量を0にし、AudioSourceコンポーネントをOFFにする
     /// </summary>
     private void MutePlayerAudio()
     {
@@ -299,6 +403,7 @@ public class PlayerHealth : MonoBehaviour
 
                     audio.volume = MutedVolume;
                     audio.Stop();
+                    audio.enabled = false; // PlayerのAudioSourceをOFFにする
                 }
             }
         }
@@ -314,6 +419,7 @@ public class PlayerHealth : MonoBehaviour
 
                 audio.volume = MutedVolume;
                 audio.Stop();
+                audio.enabled = false; // PlayerのAudioSourceをOFFにする
             }
         }
     }
@@ -600,9 +706,43 @@ public class PlayerHealth : MonoBehaviour
 
     private void SetPlayerInput(bool isEnabled)
     {
+        // 1. playerMove の取得・無効化
+        if (playerMove == null)
+        {
+            playerMove = GetComponent<PlayerMove>();
+            if (playerMove == null) playerMove = GetComponentInParent<PlayerMove>();
+            if (playerMove == null) playerMove = GetComponentInChildren<PlayerMove>();
+        }
+
         if (playerMove != null)
         {
             playerMove.enabled = isEnabled;
+        }
+
+        // 2. New Input SystemのPlayerInputコンポーネントがある場合も安全に無効化
+        Component playerInput = GetComponent("PlayerInput");
+        if (playerInput == null) playerInput = GetComponentInParent(System.Type.GetType("UnityEngine.InputSystem.PlayerInput, Unity.InputSystem"));
+        if (playerInput == null) playerInput = GetComponentInChildren(System.Type.GetType("UnityEngine.InputSystem.PlayerInput, Unity.InputSystem"));
+
+        if (playerInput is Behaviour inputBehaviour)
+        {
+            inputBehaviour.enabled = isEnabled;
+        }
+
+        // 3. カメラ側に視点・回転スクリプトが付いている場合の制御
+        if (cameraTransform != null && !isEnabled)
+        {
+            MonoBehaviour[] camScripts = cameraTransform.GetComponents<MonoBehaviour>();
+            foreach (var s in camScripts)
+            {
+                if (s == null) continue;
+                string sName = s.GetType().Name.ToLower();
+                // 視点操作やマウスルック系のスクリプトを停止
+                if (sName.Contains("look") || sName.Contains("camera") || sName.Contains("view"))
+                {
+                    s.enabled = false;
+                }
+            }
         }
     }
 

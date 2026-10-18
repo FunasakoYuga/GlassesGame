@@ -14,7 +14,7 @@ public class GoalTrigger : MonoBehaviour
         UIManager uiManager = FindAnyObjectByType<UIManager>();
 
         isGoalReached = true;
-        uiManager.ShowResultUI();
+    //    uiManager.ShowResultUI();
 
     }
 }

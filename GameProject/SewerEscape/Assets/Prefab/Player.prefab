@@ -389,7 +389,7 @@ GameObject:
   m_Component:
   - component: {fileID: 822646051104511095}
   - component: {fileID: 8735592969409067390}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: MiniMapDirectionDisp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -681,6 +681,11 @@ MonoBehaviour:
   blackScreenWaitTime: 0.3
   gameOverPanel: {fileID: 0}
   firstGameOverButton: {fileID: 0}
+  resultPanel: {fileID: 0}
+  firstResultButton: {fileID: 0}
+  resultAudioSource: {fileID: 0}
+  resultClip: {fileID: 0}
+  titleSceneName: TitleScene
   playerMove: {fileID: 4184654544379862942}
   playerAnimator: {fileID: 0}
   GameOveraudioSource: {fileID: 0}
@@ -688,6 +693,11 @@ MonoBehaviour:
   dieClips:
   - {fileID: 8300000, guid: 09368881a8ca24c46bff381f80be787d, type: 3}
   gameOverClip: {fileID: 8300000, guid: d4ee865dd3ace4a4a94761208ca60d68, type: 3}
+  bugAudioSources: []
+  goalClimbDuration: 2
+  climbSpeed: 2.5
+  goalFadeDuration: 1
+  climbRotateSpeed: 8
   enableFallDownEffect: 1
   cameraTransform: {fileID: 0}
   fallDelay: 0.4

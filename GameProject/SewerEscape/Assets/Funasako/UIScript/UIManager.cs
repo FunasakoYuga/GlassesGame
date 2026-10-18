@@ -79,6 +79,10 @@ public class UIManager : MonoBehaviour
     // 遷移中の連打防止フラグ
     private bool isTransitioning = false;
 
+    private void Awake()
+    {
+        if (instance == null) instance = this;
+    }
     void Start()
     {
         isTransitioning = false;
@@ -96,7 +100,7 @@ public class UIManager : MonoBehaviour
         m_hudPanel.SetActive(true);
         m_resultPanel.SetActive(false);
         m_objectiveText.text = "COLLECT ALL ITEMS";
-
+        m_ItemText.color = new Color32(236, 228, 66, 255);
 
 
         // ↓重い処理らしいので普通にGet関数とか取得できるようにしてもらう
@@ -138,6 +142,8 @@ public class UIManager : MonoBehaviour
 
         if (!m_isGameActive) return;
 
+        m_hudPanel.SetActive(!m_playerHealth.IsRespawning);
+
         if (m_passedTime > 0 && !m_checkMaxItem)
         {
             m_checkMaxItem = true;
@@ -150,9 +156,16 @@ public class UIManager : MonoBehaviour
         m_currentItem = m_keymanager.GetKeyFgmNum();
         m_ItemText.text = m_currentItem.ToString();
 
+        if (m_currentLives <= 1)
+        {
+            m_lifeText.color = new Color32(164, 14, 14, 255);
+        }
+
         if (m_keymanager.IsClearReach())
         {
-            m_objectiveText.text = "BACK TO THE PORTAL";
+            m_objectiveText.text = "BACK TO THE GOAL";
+            m_objectiveText.color = new Color32(209, 60, 224, 255);
+            m_ItemText.color = new Color32(255, 255, 255, 100);
         }
 
         m_currentHits = (int)m_hitsField.GetValue(m_playerHealth);

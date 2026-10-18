@@ -127,6 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 059384082a0e0f644b5bf43f4e5df0e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeyFragment
+  audioSource: {fileID: 0}
   clip: {fileID: 8300000, guid: 41fc6eb5b6cc64f418c27a563b6a5c4e, type: 3}
 --- !u!82 &1233798057972425434
 AudioSource:
@@ -135,7 +136,7 @@ AudioSource:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4187795914168106975}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}

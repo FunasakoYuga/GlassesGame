@@ -389,7 +389,9 @@ public class PlayerHealth : MonoBehaviour
         {
             EnableUnscaledTimeForUI(resultPanel);
 
-            resultPanel.SetActive(true);
+            //    resultPanel.SetActive(true);
+            UIManager.instance.ShowResultUI(); // ←消さないでね
+
 
             // コントローラー用にリザルトパネルの最初のボタンを選択状態にする
             if (firstResultButton != null && EventSystem.current != null)

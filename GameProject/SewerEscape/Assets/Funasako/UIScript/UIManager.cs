@@ -252,7 +252,7 @@ public class UIManager : MonoBehaviour
 
         yield return new WaitForSeconds(m_scoreDelayTime);
 
-        int totalScore = (m_currentItem * 10) + (m_currentHits * 50);
+        int totalScore = ((m_maxItem - m_currentItem) * 10) - (m_currentHits * 500);
         m_totalScoreText.text = totalScore.ToString();
         m_ScoreText.gameObject.SetActive (true);
         m_totalScoreText.gameObject.SetActive(true);

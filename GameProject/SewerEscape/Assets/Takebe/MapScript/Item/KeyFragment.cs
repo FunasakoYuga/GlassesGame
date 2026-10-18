@@ -4,10 +4,13 @@ public class KeyFragment : MonoBehaviour
 {
     // 存在するか
     bool isExist = true;
+
+    AudioSource audioSource;
+    [SerializeField] AudioClip clip;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        audioSource = GetComponentInChildren<AudioSource>();    // 子のAudioSourceを取得
     }
 
     // Update is called once per frame
@@ -18,10 +21,15 @@ public class KeyFragment : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // 当たったら消える
         if(other.gameObject.tag == "Player")
         {
             isExist = false;
-            Destroy(gameObject);
+            audioSource.PlayOneShot(clip);
+            audioSource.transform.parent = null;    // Keyから切り離す
+            Destroy(audioSource.gameObject, 3); // 子(audioSource)も1秒後に消す
+
+            Destroy(gameObject);    // 自身を消す
         }
     }
 }

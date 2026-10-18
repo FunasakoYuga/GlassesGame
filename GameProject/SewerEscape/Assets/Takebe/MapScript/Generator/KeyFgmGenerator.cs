@@ -95,6 +95,7 @@ public class KeyFgmGenerator : MonoBehaviour
                     // 2つの子の「向き」を t の割合で混ぜた向きを求める
                     // (t = 0 なら始点の子と同じ向き、t = 1なら終点の子と同じ向き)
                     Quaternion rot = Quaternion.Slerp(parts[s].rotation, parts[s + 1].rotation, t);
+                    rot = rot * Quaternion.Euler(-90f, 0f, 0f);
 
                     // アイテムを生成(最後の transform は、このオブジェクトの子にする指定)
                     Instantiate(keyFgmPre, pos, rot, transform);

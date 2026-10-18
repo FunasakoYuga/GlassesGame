@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using System.Reflection;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+
 // ビルドしたときバグ発見
 // using UnityEngine.WSA;
 
@@ -28,6 +29,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI m_objectiveText;
 
     // リザルト
+    [SerializeField] private UnityEngine.UI.Image m_upBorder;
+    [SerializeField] private UnityEngine.UI.Image m_downBorder;
     [SerializeField] private GameObject m_resultPanel;
     [SerializeField] private TextMeshProUGUI m_timeText;
     [SerializeField] private TextMeshProUGUI m_timeScoreText;
@@ -165,7 +168,8 @@ public class UIManager : MonoBehaviour
 
     public void ShowResultUI()
     {
-
+        m_upBorder.gameObject.SetActive(false);
+        m_downBorder.gameObject.SetActive(false);
         m_timeText.gameObject.SetActive(false);
         m_timeScoreText.gameObject.SetActive(false);
         m_resultItemText.gameObject.SetActive(false);
@@ -210,6 +214,8 @@ public class UIManager : MonoBehaviour
         int minites = Mathf.FloorToInt(m_passedTime / 60F);
         int seconds = Mathf.FloorToInt(m_passedTime % 60F);
         m_timeScoreText.text = $"{minites:00}:{seconds:00}";
+        m_upBorder.gameObject.SetActive(true);
+        m_downBorder.gameObject.SetActive(true);
         m_timeText.gameObject.SetActive (true);
         m_timeScoreText.gameObject.SetActive(true);
         m_audioSource.Stop();

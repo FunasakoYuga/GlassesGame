@@ -10,7 +10,9 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private int maxHits = 3;                            // 3回目で完全フェードアウト
 
     [Header("フェード演出設定")]
-    [SerializeField] private CanvasGroup fadeCanvasGroup;            // 画面を覆うパネル
+    [SerializeField] private CanvasGroup gameoverCanvasGroup;            // 画面を覆うパネル（ゲームオーバー用・黒など）
+    [Tooltip("ゴール演出専用のフェードパネル（RespawnFadePanelなどの白パネルを指定）")]
+    [SerializeField] private CanvasGroup goalFadeCanvasGroup;        // ゴール専用のフェードパネル
     [SerializeField] private float lookWaitTime = 2.0f;              // 視点を向けてから暗転するまでの待機時間（秒）
     [Range(1.0f, 4.0f)]
     [SerializeField] private float fadeDuration = 1.5f;              // フェードイン / フェードアウト
@@ -22,10 +24,10 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private GameObject firstGameOverButton;         // 暗転後にコントローラーで最初に選択するボタン
 
     [Header("リザルトUI設定")]
-    [SerializeField] private GameObject resultPanel;                 // 【追加】表示するリザルトパネル
-    [SerializeField] private GameObject firstResultButton;           // 【追加】表示後にコントローラーで最初に選択するボタン
-    [SerializeField] private AudioSource resultAudioSource;          // 【追加】リザルト効果音を鳴らすAudioSource（未設定時はResultPanel内またはカメラ位置で再生）
-    [SerializeField] private AudioClip resultClip;                   // 【追加】ResultPanel表示時に鳴らす効果音（ジングル・クリアSE）
+    [SerializeField] private GameObject resultPanel;                 // 表示するリザルトパネル
+    [SerializeField] private GameObject firstResultButton;           // 表示後にコントローラーで最初に選択するボタン
+    [SerializeField] private AudioSource resultAudioSource;          // リザルト効果音を鳴らすAudioSource（未設定時はResultPanel内またはカメラ位置で再生）
+    [SerializeField] private AudioClip resultClip;                   // ResultPanel表示時に鳴らす効果音（ジングル・クリアSE）
 
     [Header("シーン遷移設定")]
     [SerializeField] private string titleSceneName = "TitleScene";   // タイトルシーン名
@@ -46,10 +48,18 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private AudioSource[] bugAudioSources;          // ゴール時に音量を0にするbug（敵）のAudioSource（未設定時は自動検索）
 
     [Header("ゴール（梯子上昇）演出設定")]
-    [SerializeField] private float goalClimbDuration = 2.0f;          // 【追加】上昇演出および完全暗転までの時間（秒）
-    [SerializeField] private float climbSpeed = 2.5f;                // 【追加】梯子を上る上昇速度（m/s）
-    [SerializeField] private float goalFadeDuration = 1.0f;           // 【追加】暗転（フェードアウト）にかける時間（秒）
-    [SerializeField] private float climbRotateSpeed = 8.0f;          // 【追加】梯子の向き（0度または180度）へ体を合わせる回転補間速度
+    [SerializeField] private float goalClimbDuration = 2.0f;          // 上昇演出および完全暗転までの時間（秒）
+    [SerializeField] private float climbSpeed = 2.5f;                // 梯子を上る上昇速度（m/s）
+    [SerializeField] private float goalFadeDuration = 1.0f;           // 暗転（フェードアウト）にかける時間（秒）
+    [SerializeField] private float climbRotateSpeed = 8.0f;          // 梯子の向きへ体を合わせる回転補間速度
+    [SerializeField] private float climbSnapSpeed = 5.0f;            // 梯子の正面位置（X・Z座標）へプレイヤーを吸い寄せる補間速度
+    [SerializeField] private float ladderFrontOffset = 0.3f;         // 梯子手前の正面に立つためのオフセット距離（メートル）
+    [Tooltip("ワールド座標の0度/180度に合わせる場合はチェックを入れる")]
+    [SerializeField] private bool useWorldAxis0Or180 = false;        // ワールドの0/180度固定フラグ
+    [Tooltip("梯子モデルの正面が90度横を向いている場合の補正角度（90, -90など）")]
+    [SerializeField] private float ladderModelAngleOffset = 0.0f;    // モデル軸ズレ補正用角度
+    [Tooltip("梯子の向きが背中合わせ（180度逆）になってしまう場合にチェックを入れる")]
+    [SerializeField] private bool reverseClimbDirection = false;     // はしごを登る向きの180度手動反転フラグ
 
     // 敵に当たった時にプレイヤー（カメラ）が倒れ込む演出設定
     [Header("被弾時の転倒（倒れ込み）演出設定")]
@@ -74,6 +84,7 @@ public class PlayerHealth : MonoBehaviour
     private const float FadeAlphaBlack = 1.0f;                       // 完全暗転時のアルファ値
 
     // 梯子演出用定数（マジックナンバー回避）
+    private const float WorldAngleZero = 0.0f;                       // ワールド基準の0度
     private const float HalfTurnAngle = 180.0f;                      // 梯子の反対向き（180度反転）角度
 
     private Vector3 defaultCamLocalPos;                              // カメラの初期ローカル座標（リスポーン復帰用）
@@ -94,7 +105,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Awake()
     {
-        // 前のシーンやリトライ前の停止状態（Time.timeScale = 0）を引き継がないよう、開始時に通常速度へリセット
+        // シーン遷移が止まらないように開始時に通常速度へリセット
         Time.timeScale = NormalTimeScale;
 
         spawnPosition = transform.position;
@@ -142,10 +153,17 @@ public class PlayerHealth : MonoBehaviour
             defaultCamLocalRot = cameraTransform.localRotation;
         }
 
-        if (fadeCanvasGroup != null)
+        if (gameoverCanvasGroup != null)
         {
-            fadeCanvasGroup.alpha = 0f;
-            fadeCanvasGroup.blocksRaycasts = false;
+            gameoverCanvasGroup.alpha = 0f;
+            gameoverCanvasGroup.blocksRaycasts = false;
+        }
+
+        // ゴール専用フェードパネルの初期化
+        if (goalFadeCanvasGroup != null)
+        {
+            goalFadeCanvasGroup.alpha = 0f;
+            goalFadeCanvasGroup.blocksRaycasts = false;
         }
 
         // 開始時はゲームオーバーパネルを非表示にしておく
@@ -182,7 +200,7 @@ public class PlayerHealth : MonoBehaviour
         // リスポーンか死亡か
         if (isDead || isRespawning) return;
 
-        // 【追加】GoalItemタグを持つオブジェクトに接触した場合
+        // GoalItemタグを持つオブジェクトに接触した場合
         if (target.CompareTag("GoaLItem") || target.transform.root.CompareTag("GoaLItem"))
         {
             HandleGoal(target);
@@ -196,7 +214,7 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    // 【追加】ゴール（GoalItem接触時）の処理
+    //  ゴール（GoalItem接触時）の処理
     private void HandleGoal(GameObject target)
     {
         isDead = true; // 以降の被弾やリスポーン判定を無効化
@@ -206,31 +224,56 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】梯子を上るようにプレイヤーを上昇させ、2秒後に完全フェードアウトしてResultPanelを表示するコルーチン
+    ///  梯子を上るようにプレイヤーを上昇させ、2秒後に完全フェードアウトしてResultPanelを表示するコルーチン
     /// </summary>
     private IEnumerator GoalClimbRoutine(GameObject goalTarget)
     {
-        // 1. 移動・視点入力を即座に遮断
+        // 移動・視点入力を即座に遮断
         SetPlayerInput(false);
 
-        // 2. 物理移動・落下の干渉を防ぐためCharacterControllerを一時無効化
+        // 物理移動・落下の干渉を防ぐためCharacterControllerを一時無効化
         if (characterController != null)
         {
             characterController.enabled = false;
         }
 
-        // 3. 心臓音を完全に停止・リセット
+        // 心臓音を完全に停止・リセット
         if (heartbeatController != null)
         {
             heartbeatController.ResetHeartbeat();
             heartbeatController.enabled = false;
         }
 
-        // GoalItemのY軸回転を基準に、0度または180度のうちプレイヤーの現在向きに近い目標回転を決定
-        float goalY = (goalTarget != null) ? goalTarget.transform.eulerAngles.y : transform.eulerAngles.y;
-        Quaternion rot0 = Quaternion.Euler(0f, goalY, 0f);
-        Quaternion rot180 = Quaternion.Euler(0f, goalY + HalfTurnAngle, 0f);
-        Quaternion targetRotation = (Quaternion.Angle(transform.rotation, rot0) <= Quaternion.Angle(transform.rotation, rot180)) ? rot0 : rot180;
+        // 基準となるY軸角度の決定（ワールド0度固定か、GoalItemの角度基準か）
+        float targetY = WorldAngleZero;
+        if (!useWorldAxis0Or180 && goalTarget != null)
+        {
+            targetY = goalTarget.transform.eulerAngles.y;
+        }
+
+        // モデル軸ズレ等の補正角度を加算
+        targetY += ladderModelAngleOffset;
+
+        // 反転設定にチェックが入っている場合は180度反転
+        if (reverseClimbDirection)
+        {
+            targetY += HalfTurnAngle;
+        }
+
+        Quaternion targetRotation = Quaternion.Euler(0f, targetY, 0f);
+
+        // 梯子の正面手前（X・Z軸）の目標吸い寄せ位置を算出（梯子の位置からプレイヤーの背面側へオフセット）
+        Vector3 targetXZ = transform.position;
+        if (goalTarget != null)
+        {
+            Vector3 ladderPos = goalTarget.transform.position;
+            Vector3 offsetDir = -(targetRotation * Vector3.forward);
+            targetXZ = ladderPos + offsetDir * ladderFrontOffset;
+        }
+
+
+        // ゴール専用のCanvasGroupがあれば優先使用、なければ従来のgameoverCanvasGroupを使用
+        CanvasGroup targetFade = (goalFadeCanvasGroup != null) ? goalFadeCanvasGroup : gameoverCanvasGroup;
 
         // 2秒後にちょうど完全暗転するようにフェード開始タイミングを算出
         float fadeStartTime = Mathf.Max(0f, goalClimbDuration - goalFadeDuration);
@@ -251,35 +294,43 @@ public class PlayerHealth : MonoBehaviour
                 cameraTransform.localRotation = Quaternion.Slerp(cameraTransform.localRotation, defaultCamLocalRot, climbRotateSpeed * dt);
             }
 
-            // 梯子を上るように上方向へ移動
-            transform.position += Vector3.up * (climbSpeed * dt);
+            // X・Z座標を梯子の正面位置へスムーズに吸い寄せる
+            float currentX = Mathf.Lerp(transform.position.x, targetXZ.x, climbSnapSpeed * dt);
+            float currentZ = Mathf.Lerp(transform.position.z, targetXZ.z, climbSnapSpeed * dt);
 
-            // フェードアウト開始タイミングになったら暗転を開始
+            // 梯子を上るように上方向へ移動
+            float currentY = transform.position.y + (climbSpeed * dt);
+
+            transform.position = new Vector3(currentX, currentY, currentZ);
+
+            // フェードアウト開始タイミングになったら暗転（白フェード）を開始
             if (!fadeStarted && timer >= fadeStartTime)
             {
                 fadeStarted = true;
-                if (fadeCanvasGroup != null)
+                if (targetFade != null)
                 {
-                    fadeCanvasGroup.blocksRaycasts = true;
-                    StartCoroutine(Fade(FadeAlphaClear, FadeAlphaBlack, goalFadeDuration));
+                    targetFade.blocksRaycasts = true;
+                    StartCoroutine(Fade(targetFade, FadeAlphaClear, FadeAlphaBlack, goalFadeDuration));
                 }
             }
 
             yield return null;
         }
 
-        // 最終的な向きを確実に目標角度に固定
+        // 最終的な向きと位置（X・Z座標）を目標値に固定
         transform.rotation = targetRotation;
+        transform.position = new Vector3(targetXZ.x, transform.position.y, targetXZ.z);
+
         if (cameraTransform != null)
         {
             cameraTransform.localRotation = defaultCamLocalRot;
         }
 
-        // 確実に画面を真っ黒で固定
-        if (fadeCanvasGroup != null)
+        // 確実に画面をフェード（白など）で固定
+        if (targetFade != null)
         {
-            fadeCanvasGroup.alpha = FadeAlphaBlack;
-            fadeCanvasGroup.blocksRaycasts = true;
+            targetFade.alpha = FadeAlphaBlack;
+            targetFade.blocksRaycasts = true;
         }
 
         // 2秒後（上昇演出および暗転完了後）にResultPanelを表示
@@ -287,11 +338,11 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】ResultPanelを表示し、音を消してゲーム内の時間を停止する処理
+    /// ResultPanelを表示し、音を消してゲーム内の時間を停止する処理
     /// </summary>
     public void ShowResultPanel()
     {
-        // 1. 時間は止めず、プレイヤー入力・移動を完全に遮断
+        // 時間は止めず、プレイヤー入力・移動を完全に遮断
         SetPlayerInput(false);
 
         // CharacterControllerを無効化して物理移動・落下を完全停止
@@ -300,26 +351,26 @@ public class PlayerHealth : MonoBehaviour
             characterController.enabled = false;
         }
 
-        // 2. プレイヤーのアニメーションを停止
+        // プレイヤーのアニメーションを停止
         if (playerAnimator != null)
         {
             playerAnimator.speed = 0f;
         }
 
-        // 3. PlayerのAudioの音量を0にし、AudioSourceコンポーネントをOFFにする（※ResultPanel内のオーディオは除外して保護）
+        // PlayerのAudioの音量を0にし、AudioSourceコンポーネントをOFFにする（※ResultPanel内のオーディオは除外して保護）
         MutePlayerAudio();
 
-        // 4. bugのAudioは停止せずそのまま鳴らしておくため呼び出しをスキップ
+        // bugのAudioは停止せずそのまま鳴らしておくため呼び出しをスキップ
         // MuteBugAudio();
 
-        // 5. 心臓音も完全に停止・リセット
+        // 心臓音も完全に停止・リセット
         if (heartbeatController != null)
         {
             heartbeatController.ResetHeartbeat();
             heartbeatController.enabled = false;
         }
 
-        // 6. シーン内にあるポーズ関連のスクリプトを無効化してポーズ入力を完全停止
+        // シーン内にあるポーズ関連のスクリプトを無効化してポーズ入力を完全停止
         MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
         foreach (var script in allScripts)
         {
@@ -333,15 +384,12 @@ public class PlayerHealth : MonoBehaviour
             }
         }
 
-        // 7. ResultPanelを表示（時間は止めていないため通常通りアニメーションや演出が動きます）
+        // ResultPanelを表示（時間は止めていないため通常通りアニメーションや演出が動きます）
         if (resultPanel != null)
         {
             EnableUnscaledTimeForUI(resultPanel);
 
-            // コメントアウトしときます
-            //    resultPanel.SetActive(true);
-            // ここだけ追加させてください
-            UIManager.instance.ShowResultUI();
+            resultPanel.SetActive(true);
 
             // コントローラー用にリザルトパネルの最初のボタンを選択状態にする
             if (firstResultButton != null && EventSystem.current != null)
@@ -350,10 +398,10 @@ public class PlayerHealth : MonoBehaviour
             }
         }
 
-        // 8. 【追加】ResultPanel表示時の効果音（ジングルSE）を再生
+        // ResultPanel表示時の効果音（ジングルSE）を再生
         PlayResultSound();
 
-        // 9. ボタン操作のためにマウスカーソルを表示・解放
+        // ボタン操作のためにマウスカーソルを表示・解放
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -361,7 +409,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】ResultPanel表示時の効果音（ジングルSE）を再生する
+    ///  ResultPanel表示時の効果音（SE）を再生する
     /// </summary>
     private void PlayResultSound()
     {
@@ -390,7 +438,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】PlayerのAudioSourceの音量を0にし、AudioSourceコンポーネントをOFFにする
+    ///  PlayerのAudioSourceの音量を0にし、AudioSourceコンポーネントをOFFにする
     /// </summary>
     private void MutePlayerAudio()
     {
@@ -428,7 +476,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】bug（敵）のAudioSourceの音量を0にする
+    ///  bug（敵）のAudioSourceの音量を0にする
     /// </summary>
     private void MuteBugAudio()
     {
@@ -494,7 +542,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】UI演出（AnimatorやParticleSystem）がTime.timeScale = 0でも停止しないようUnscaledTimeに設定する
+    ///  UI演出（AnimatorやParticleSystem）がTime.timeScale = 0でも停止しないようUnscaledTimeに設定する
     /// </summary>
     private void EnableUnscaledTimeForUI(GameObject targetPanel)
     {
@@ -523,7 +571,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】シーン内のゲームオーディオ（敵の音や環境音など）を一括停止する
+    ///  シーン内のゲームオーディオ（敵の音や環境音など）を一括停止する
     /// （ResultPanel自身に付いているクリアジングルやUI用AudioSourceは止めないように保護）
     /// </summary>
     private void StopAllGameAudio()
@@ -649,9 +697,10 @@ public class PlayerHealth : MonoBehaviour
         yield return new WaitForSeconds(lookWaitTime);
 
         // 徐々に暗転
-        if (fadeCanvasGroup != null)
+        if (gameoverCanvasGroup != null)
         {
-            fadeCanvasGroup.blocksRaycasts = true;
+            gameoverCanvasGroup.alpha = 0f;
+            gameoverCanvasGroup.blocksRaycasts = true;
             yield return StartCoroutine(Fade(0f, 1f, fadeDuration));
         }
 
@@ -692,10 +741,11 @@ public class PlayerHealth : MonoBehaviour
         }
 
         // 徐々にフェードアウト
-        if (fadeCanvasGroup != null)
+        if (gameoverCanvasGroup != null)
         {
             yield return StartCoroutine(Fade(1f, 0f, fadeInDuration));
-            fadeCanvasGroup.blocksRaycasts = false;
+            gameoverCanvasGroup.alpha = 0f;
+            gameoverCanvasGroup.blocksRaycasts = false;
         }
 
         // 入力再開
@@ -709,7 +759,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void SetPlayerInput(bool isEnabled)
     {
-        // 1. playerMove の取得・無効化
+        // playerMove の取得・無効化
         if (playerMove == null)
         {
             playerMove = GetComponent<PlayerMove>();
@@ -722,7 +772,7 @@ public class PlayerHealth : MonoBehaviour
             playerMove.enabled = isEnabled;
         }
 
-        // 2. New Input SystemのPlayerInputコンポーネントがある場合も安全に無効化
+        // New Input SystemのPlayerInputコンポーネントがある場合も安全に無効化
         Component playerInput = GetComponent("PlayerInput");
         if (playerInput == null) playerInput = GetComponentInParent(System.Type.GetType("UnityEngine.InputSystem.PlayerInput, Unity.InputSystem"));
         if (playerInput == null) playerInput = GetComponentInChildren(System.Type.GetType("UnityEngine.InputSystem.PlayerInput, Unity.InputSystem"));
@@ -732,7 +782,7 @@ public class PlayerHealth : MonoBehaviour
             inputBehaviour.enabled = isEnabled;
         }
 
-        // 3. カメラ側に視点・回転スクリプトが付いている場合の制御
+        // カメラ側に視点・回転スクリプトが付いている場合の制御
         if (cameraTransform != null && !isEnabled)
         {
             MonoBehaviour[] camScripts = cameraTransform.GetComponents<MonoBehaviour>();
@@ -749,28 +799,37 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+    // 従来のfadeCanvasGroup用Fade処理
     private IEnumerator Fade(float startAlpha, float targetAlpha, float duration)
     {
+        yield return StartCoroutine(Fade(gameoverCanvasGroup, startAlpha, targetAlpha, duration));
+    }
+
+    // 指定したCanvasGroupに対してフェードを行うオーバーロード処理
+    private IEnumerator Fade(CanvasGroup targetGroup, float startAlpha, float targetAlpha, float duration)
+    {
+        if (targetGroup == null) yield break;
+
         if (duration <= 0f)
         {
-            fadeCanvasGroup.alpha = targetAlpha;
+            targetGroup.alpha = targetAlpha;
             yield break;
         }
 
         float timer = 0f;
-        fadeCanvasGroup.alpha = startAlpha;
+        targetGroup.alpha = startAlpha;
 
         while (timer < duration)
         {
             timer += Time.deltaTime;
             float t = Mathf.Clamp01(timer / duration);
             float smoothedT = Mathf.SmoothStep(0f, 1f, t);
-            fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, smoothedT);
+            targetGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, smoothedT);
 
             yield return null;
         }
 
-        fadeCanvasGroup.alpha = targetAlpha;
+        targetGroup.alpha = targetAlpha;
     }
 
     private IEnumerator Die()
@@ -783,13 +842,13 @@ public class PlayerHealth : MonoBehaviour
         yield return new WaitForSeconds(lookWaitTime);
 
         // フェードアウト
-        if (fadeCanvasGroup != null)
+        if (gameoverCanvasGroup != null)
         {
-            fadeCanvasGroup.blocksRaycasts = true;
+            gameoverCanvasGroup.blocksRaycasts = true;
             yield return StartCoroutine(Fade(0f, 1f, fadeDuration));
 
             // 確実に真っ黒（Alpha = 1）で固定(リザルト)
-            fadeCanvasGroup.alpha = 1f;
+            gameoverCanvasGroup.alpha = 1f;
         }
 
         // フェードアウト後にマウスの入力を解放してカーソルを表示する
@@ -843,7 +902,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】UIボタン等から呼び出すリトライ処理
+    ///  UIボタン等から呼び出すリトライ処理
     /// </summary>
     public void Retry()
     {
@@ -854,7 +913,7 @@ public class PlayerHealth : MonoBehaviour
     }
 
     /// <summary>
-    /// 【追加】UIボタン等から呼び出すタイトル画面遷移処理
+    ///  UIボタン等から呼び出すタイトル画面遷移処理
     /// </summary>
     public void BackToTitle()
     {

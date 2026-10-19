@@ -266,7 +266,7 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(m_rankDelayTime);
 
         string rank = "C";
-        if (lostLife == 0 && m_currentItem >= m_maxItem) rank = "S";
+        if (lostLife == 0 && m_currentItem <= 0) rank = "S";
         else if (lostLife == 1) rank = "A";
         else if (lostLife == 2) rank = "B";
         m_finalRankText.text = rank.ToString();

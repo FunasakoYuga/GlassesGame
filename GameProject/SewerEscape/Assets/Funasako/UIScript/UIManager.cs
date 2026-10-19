@@ -175,7 +175,7 @@ public class UIManager : MonoBehaviour
         // デバッグ用
         //if (Keyboard.current.digit1Key.wasPressedThisFrame) OnItemCollected();
         //if (Keyboard.current.digit2Key.wasPressedThisFrame) OnPlayerDamaged();
-        if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
+        // if (Keyboard.current.digit3Key.wasPressedThisFrame) ShowResultUI();
     }
 
 

@@ -244,7 +244,7 @@ public class UIManager : MonoBehaviour
 
         yield return new WaitForSeconds(m_scoreDelayTime);
 
-        int lostLife = m_maxLivesMemo - m_currentHits;
+        int lostLife = m_currentHits;
         m_lostLifeText.text = lostLife.ToString();
         m_resultLifeText.gameObject.SetActive (true);
         m_lostLifeText.gameObject.SetActive(true);
